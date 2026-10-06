@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Agent: B2B Supervisor Demo Stand</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b' },
+            darkbg: '#0b0f19',
+            cardbg: '#111827',
+            bordercol: '#1f2937'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0b0f19; }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+  <!-- TOP NAVBAR -->
+  <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+        HA
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-lg tracking-tight text-white">HERMES AGENT</span>
+          <span class="px-2 py-0.5 text-xs font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full">B2B SUPERVISOR</span>
+        </div>
+        <p class="text-xs text-slate-400">Интеллектуальный контроль Битрикс24 и 1C:ERP для позаказного производства</p>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <nav class="flex space-x-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-sm">
+      <button onclick="switchTab('call')" id="tab-call" class="px-4 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow">
+        📞 Звонки Битрикс24
+      </button>
+      <button onclick="switchTab('prompter')" id="tab-prompter" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        🧠 1C:ERP Суфлёр
+      </button>
+      <button onclick="switchTab('audit')" id="tab-audit" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        🚨 1C:ERP Аудит
+      </button>
+      <button onclick="switchTab('rop')" id="tab-rop" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        📊 Дашборд РОПа
+      </button>
+      <button onclick="switchTab('tg')" id="tab-tg" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        💬 Telegram Бот
+      </button>
+    </nav>
+
+    <!-- STATUS INDICATOR -->
+    <div class="flex items-center space-x-2 text-xs">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="text-slate-300 font-mono">STAND ONLINE</span>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+
+    <!-- ============================================== -->
+    <!-- TAB 1: АНАЛИЗ ЗВОНКОВ БИТРИКС24 -->
+    <!-- ============================================== -->
+    <div id="view-call" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Мониторинг телефонных звонков менеджеров</h2>
+          <p class="text-sm text-slate-400">Автоматический забор записи из Битрикс24, транскрибация Whisper, аудит по чек-листу и постановка задач</p>
+        </div>
+        <div class="flex space-x-2">
+          <button onclick="loadCall('poor')" class="px-3 py-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 rounded-lg text-xs font-semibold hover:bg-rose-600/30">
+            ⚠️ Загрузить звонок с ошибками (Иванов)
+          </button>
+          <button onclick="loadCall('excellent')" class="px-3 py-1.5 bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-600/30">
+            ✓ Загрузить эталонный звонок (Смирнова)
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Левая колонка: Транскрипт и плеер -->
+        <div class="lg:col-span-6 space-y-4">
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-xs font-mono" id="call-id-badge">CALL_2026_091</span>
+                <span class="text-sm font-semibold text-white" id="call-client-title">ООО «СеверСпецСтрой»</span>
+              </div>
+              <span class="text-xs text-slate-400" id="call-manager-title">Менеджер: Иванов Сергей</span>
+            </div>
+
+            <!-- Fake Waveform -->
+            <div class="mt-4 p-3 bg-gray-950/60 rounded-xl border border-gray-800 flex items-center space-x-3">
+              <button class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white shadow">
+                ▶
+              </button>
+              <div class="flex-1 flex items-center space-x-1 h-6">
+                <div class="w-1 bg-indigo-500 h-3 rounded"></div>
+                <div class="w-1 bg-indigo-500 h-5 rounded"></div>
+                <div class="w-1 bg-indigo-400 h-2 rounded"></div>
+                <div class="w-1 bg-indigo-400 h-6 rounded"></div>
+                <div class="w-1 bg-indigo-400 h-4 rounded"></div>
+                <div class="w-1 bg-indigo-500 h-5 rounded"></div>
+                <div class="w-1 bg-indigo-500 h-3 rounded"></div>
+                <div class="w-1 bg-indigo-400 h-2 rounded"></div>
+                <div class="w-1 bg-indigo-400 h-6 rounded"></div>
+                <div class="w-1 bg-indigo-500 h-4 rounded"></div>
+                <div class="w-1 bg-gray-700 h-3 rounded"></div>
+                <div class="w-1 bg-gray-700 h-5 rounded"></div>
+                <div class="w-1 bg-gray-700 h-2 rounded"></div>
+                <div class="w-1 bg-gray-700 h-6 rounded"></div>
+              </div>
+              <span class="text-xs font-mono text-slate-400">01:42 / 01:42</span>
+            </div>
+
+            <!-- Transcript Body -->
+            <div class="mt-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Транскрипция разговора (Whisper AI):</h4>
+              <div id="call-transcript-box" class="h-64 overflow-y-auto scrollbar-thin p-3 bg-gray-950/80 rounded-xl text-xs leading-relaxed text-slate-300 font-mono space-y-2 border border-gray-900">
+                <!-- Заполняется JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Правая колонка: Аудит и реакция CRM -->
+        <div class="lg:col-span-6 space-y-4">
+          <!-- Чеклист -->
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base">Оценка соблюдения стандартов продаж</h3>
+              <div id="call-score-badge" class="px-3 py-1 rounded-xl text-sm font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
+                4.5 / 10
+              </div>
+            </div>
+
+            <div id="call-checklist-container" class="space-y-2">
+              <!-- Чеклист JS -->
+            </div>
+          </div>
+
+          <!-- Реакция Битрикс24 (Таймлайн и Задача) -->
+          <div id="call-reaction-box" class="glass-card rounded-2xl p-5 border border-gray-800 space-y-3">
+            <!-- Заполняется JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: СУФЛЁР 1C:ERP -->
+    <!-- ============================================== -->
+    <div id="view-prompter" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Интеллектуальный суфлёр менеджера по данным 1C:ERP</h2>
+          <p class="text-sm text-slate-400">Мгновенный подъем дебиторки, свободных остатков на складе ГП, сырья и графика производства</p>
+        </div>
+        <div>
+          <select id="prompter-client-select" onchange="renderPrompter()" class="bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500">
+            <option value="CLIENT_001">ООО «СеверСпецСтрой» (Закладные МН-1)</option>
+            <option value="CLIENT_002">АО «МостоТрестГрупп» (Балки 09Г2С)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Карточка финансов -->
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+            <span>РЕГИСТР ВЗАИМОРАСЧЕТОВ</span>
+            <span id="prompt-fin-badge" class="text-rose-400">● ДОЛГ</span>
+          </div>
+          <div class="text-2xl font-bold text-white" id="prompt-debt-val">185 000 ₽</div>
+          <div class="text-xs text-rose-400 mt-1 font-medium" id="prompt-debt-sub">Просрочено на 6 дней</div>
+          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
+            <div class="flex justify-between"><span>Кредитный лимит:</span><span class="text-slate-200" id="prompt-limit-val">200 000 ₽</span></div>
+            <div class="flex justify-between"><span>Посл. платеж:</span><span class="text-slate-200" id="prompt-lastpay-val">15.09.2026</span></div>
+          </div>
+        </div>
+
+        <!-- Карточка склада ГП -->
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+            <span>СКЛАД ГОТОВОЙ ПРОДУКЦИИ</span>
+            <span class="text-emerald-400">● ОСТАТКИ</span>
+          </div>
+          <div class="text-2xl font-bold text-white" id="prompt-fg-val">200 шт.</div>
+          <div class="text-xs text-emerald-400 mt-1 font-medium">Готово к немедленной отгрузке</div>
+          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
+            <div class="flex justify-between"><span>Локация:</span><span class="text-slate-200">Цех №3 (Стеллаж Б-12)</span></div>
+            <div class="flex justify-between"><span>Резерв под заказ:</span><span class="text-slate-200">Свободно 100%</span></div>
+          </div>
+        </div>
+
+        <!-- Карточка производства -->
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+            <span>ЦЕХ И СЫРЬЁ (МЕТАЛЛ)</span>
+            <span class="text-indigo-400">● ПРОИЗВОДСТВО</span>
+          </div>
+          <div class="text-2xl font-bold text-white" id="prompt-prod-val">3 раб. дня</div>
+          <div class="text-xs text-indigo-400 mt-1 font-medium" id="prompt-metal-val">Металл в наличии на складе</div>
+          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
+            <div class="flex justify-between"><span>Свободные мощности:</span><span class="text-slate-200" id="prompt-cap-val">Завтра, смена №1</span></div>
+            <div class="flex justify-between"><span>Спецификация:</span><span class="text-slate-200">Уголок 100х100х8 ст3</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Итоговый совет суфлёра -->
+      <div class="glass-card rounded-2xl p-6 border-l-4 border-indigo-500 bg-gradient-to-r from-indigo-950/40 to-gray-900/60 shadow-xl">
+        <div class="flex items-center space-x-2 text-indigo-400 font-bold mb-3 text-sm">
+          <span>💡 ТАКТИЧЕСКИЙ СОВЕТ HERMES AGENT МЕНЕДЖЕРУ:</span>
+        </div>
+        <div class="text-slate-200 text-base leading-relaxed" id="prompt-recommendation-box">
+          <!-- Рекомендация JS -->
+        </div>
+        <div class="mt-4 flex space-x-3">
+          <button onclick="alert('Подсказка скопирована в буфер / отправлена менеджеру в чат Битрикс24!')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-xl shadow transition">
+            💬 Отправить подсказку в чат менеджеру
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: АУДИТ 1C:ERP -->
+    <!-- ============================================== -->
+    <div id="view-audit" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Регулярный аудит производства и бухгалтерии 1C:ERP</h2>
+          <p class="text-sm text-slate-400">Выявление зависших заказов, несоответствий выпуска сырью и пропущенных статей ДДС</p>
+        </div>
+        <button onclick="runAuditSimulation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow flex items-center space-x-2">
+          <span>⚡️ Запустить сканирование базы 1С</span>
+        </button>
+      </div>
+
+      <!-- Карточки расхождений -->
+      <div class="space-y-4" id="audit-cards-container">
+        <!-- Карточки JS -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 4: ДАШБОРД РОПА -->
+    <!-- ============================================== -->
+    <div id="view-rop" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Вечерний дашборд Руководителя отдела продаж (РОП)</h2>
+        <p class="text-sm text-slate-400">Автоматическая агрегация данных по звонкам менеджеров, CRM-задачам и данным производства</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ОБРАБОТАНО ЗВОНКОВ</div>
+          <div class="text-3xl font-bold text-white mt-2">45</div>
+          <div class="text-xs text-emerald-400 mt-1">100% записей прослушано AI</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">СРЕДНИЙ БАЛЛ КАЧЕСТВА</div>
+          <div class="text-3xl font-bold text-indigo-400 mt-2">7.8 <span class="text-sm text-slate-400 font-normal">/ 10</span></div>
+          <div class="text-xs text-indigo-300 mt-1">+0.4 к прошлой неделе</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ГРУБЫЕ НАРУШЕНИЯ</div>
+          <div class="text-3xl font-bold text-rose-500 mt-2">4</div>
+          <div class="text-xs text-rose-400 mt-1">Авто-задачи созданы в CRM</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">СПАСЕНО ОТГРУЗОК ДОЛЖНИКАМ</div>
+          <div class="text-3xl font-bold text-emerald-400 mt-2">425 000 ₽</div>
+          <div class="text-xs text-slate-400 mt-1">2 рисковые отгрузки остановлены</div>
+        </div>
+      </div>
+
+      <!-- Таблица менеджеров -->
+      <div class="glass-card rounded-2xl p-5 border border-gray-800">
+        <h3 class="font-bold text-white text-base mb-4">Рейтинг менеджеров по соблюдению регламента</h3>
+        <table class="w-full text-left text-sm">
+          <thead class="text-xs text-slate-400 border-b border-gray-800">
+            <tr>
+              <th class="pb-3">Менеджер</th>
+              <th class="pb-3">Звонков</th>
+              <th class="pb-3">Балл AI</th>
+              <th class="pb-3">Назначен Next Step</th>
+              <th class="pb-3">Зависшие лиды</th>
+              <th class="pb-3">Статус</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-800 text-slate-200">
+            <tr>
+              <td class="py-3 font-semibold text-white">🥇 Смирнова Анна</td>
+              <td class="py-3 font-mono">18</td>
+              <td class="py-3 font-bold text-emerald-400">9.4</td>
+              <td class="py-3 text-emerald-400">100% (18/18)</td>
+              <td class="py-3">0</td>
+              <td class="py-3"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400 font-medium">Отлично</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 font-semibold text-white">🥈 Ковалев Дмитрий</td>
+              <td class="py-3 font-mono">15</td>
+              <td class="py-3 font-bold text-indigo-400">8.1</td>
+              <td class="py-3 text-indigo-300">93% (14/15)</td>
+              <td class="py-3">1</td>
+              <td class="py-3"><span class="px-2 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-400 font-medium">В норме</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 font-semibold text-white">⚠️ Иванов Сергей</td>
+              <td class="py-3 font-mono">12</td>
+              <td class="py-3 font-bold text-rose-500">6.2</td>
+              <td class="py-3 text-rose-400">75% (9/12)</td>
+              <td class="py-3 text-rose-400 font-bold">3 лида</td>
+              <td class="py-3"><span class="px-2 py-0.5 rounded text-xs bg-rose-500/20 text-rose-400 font-medium">Требует контроля</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 5: TELEGRAM ЧАТ СИМУЛЯТОР -->
+    <!-- ============================================== -->
+    <div id="view-tg" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Интерактивный симулятор Telegram-бота Hermes</h2>
+          <p class="text-sm text-slate-400">Протестируйте голосовые поручения руководителей, запрос справок по 1С и мгновенный анализ</p>
+        </div>
+      </div>
+
+      <div class="max-w-xl mx-auto glass-card rounded-3xl overflow-hidden border border-gray-800 shadow-2xl flex flex-col h-[540px]">
+        <!-- Шапка Telegram -->
+        <div class="bg-gray-900 px-5 py-3 border-b border-gray-800 flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-white">
+            🤖
+          </div>
+          <div>
+            <div class="font-bold text-sm text-white">Hermes B2B Supervisor</div>
+            <div class="text-xs text-indigo-400">bot @hermes_supervisor_bot</div>
+          </div>
+        </div>
+
+        <!-- Сообщения -->
+        <div id="tg-chat-history" class="flex-1 p-4 overflow-y-auto scrollbar-thin space-y-3 bg-gray-950/70 text-xs">
+          <div class="p-3 bg-gray-900 rounded-2xl rounded-tl-none border border-gray-800 max-w-sm text-slate-200">
+            👋 Здравствуйте! Я ассистент Hermes над <b>Битрикс24</b> и <b>1C:ERP</b>.<br>
+            Отправьте голосовое поручение («Поставь задачу...») или нажмите кнопку ниже.
+          </div>
+        </div>
+
+        <!-- Кнопки быстрого ввода -->
+        <div class="p-3 bg-gray-900/90 border-t border-gray-800 space-y-2">
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="sendTgAction('voice')" class="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-300 rounded-lg text-xs font-medium">
+              🎙 «Поставь задачу технологу...»
+            </button>
+            <button onclick="sendTgAction('call')" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-slate-300 rounded-lg text-xs">
+              📞 /call
+            </button>
+            <button onclick="sendTgAction('prompter')" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-slate-300 rounded-lg text-xs">
+              🧠 /prompter
+            </button>
+            <button onclick="sendTgAction('audit')" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-slate-300 rounded-lg text-xs">
+              🚨 /audit
+            </button>
+            <button onclick="sendTgAction('report')" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-slate-300 rounded-lg text-xs">
+              📊 /report
+            </button>
+          </div>
+          <div class="flex space-x-2">
+            <input type="text" id="tg-input" placeholder="Введите текст или команду..." onkeydown="if(event.key==='Enter') sendTgCustom()" class="flex-1 bg-gray-950 border border-gray-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+            <button onclick="sendTgCustom()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-500">
+              Отправить
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Mock Data
+    const SAMPLE_CALLS = {
+      poor: {
+        id: "CALL_2026_091",
+        client: "ООО «СеверСпецСтрой»",
+        manager: "Иванов Сергей",
+        score: "4.5 / 10",
+        scoreBadge: "bg-rose-500/20 text-rose-400 border-rose-500/40",
+        transcript: [
+          "Менеджер: Алло, да.",
+          "Клиент: Здравствуйте. Это завод металлоконструкций «ПромМеталл»?",
+          "Менеджер: Да, слушаю вас.",
+          "Клиент: Нам нужна партия закладных деталей МН-1, около 400 штук. Сможете изготовить и сколько по деньгам?",
+          "Менеджер: Ну... чертежи есть у вас или типовые?",
+          "Клиент: Типовые МН-1-1. Главное — успеете до конца месяца?",
+          "Менеджер: Присылайте на почту info@prommetall.ru, я посмотрю. Цену навскидку не скажу, металл дорожает.",
+          "Клиент: Хорошо, а когда вы сможете расчет дать? Завтра защита сметы.",
+          "Менеджер: Как технологи освободятся, посчитают. Скидывайте, короче. Всего доброго."
+        ],
+        checklist: [
+          { title: "Приветствие и бренд завода", passed: false, comment: "Сухое «Алло, да», завод не назван" },
+          { title: "Выявление потребности и ТЗ", passed: true, comment: "Уточнено наличие чертежей" },
+          { title: "Фиксация ориентировочных сроков", passed: false, comment: "Сроки не названы («как освободятся»)" },
+          { title: "Договоренность о следующем шаге", passed: false, comment: "Контакт брошен на клиенте («скидывайте, короче»)" },
+          { title: "Деловой тон и клиентоориентированность", passed: false, comment: "Сленг «навскидку», «короче»" }
+        ],
+        taskCreated: {
+          title: "⚠️ [HERMES-CONTROL] Срочно перезвонить клиенту: нет следующего шага",
+          responsible: "Иванов Сергей (Менеджер продаж)",
+          deadline: "Сегодня до 18:00",
+          taskId: "TASK_1024"
+        }
+      },
+      excellent: {
+        id: "CALL_2026_092",
+        client: "АО «МостоТрестГрупп»",
+        manager: "Смирнова Анна",
+        score: "9.5 / 10",
+        scoreBadge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+        transcript: [
+          "Менеджер: Завод металлоконструкций «ПромМеталл», ведущий специалист Анна. Дмитрий, добрый день!",
+          "Клиент: Здравствуйте, Анна. У нас мостовые балки 140Б ст 09Г2С, 35 тонн.",
+          "Менеджер: Отличный проект! Аттестация НАКС и лаборатория УЗК в наличии. Раздел КМД уже есть?",
+          "Клиент: КМ готов, КМД отдадут через 2 дня. Нужна грунтовка и огнезащита 90R.",
+          "Менеджер: Поняла вас. Грунтование выполним. Если КМД до четверга — расчет выдадим в пятницу к 15:00. Отгрузка через 18 раб. дней.",
+          "Клиент: Звучит отлично, сроки подходят. Куда прислать?",
+          "Менеджер: На a.smirnova@prommetall.ru. Давайте в пятницу в 16:00 наберу вас со сметой, удобно?",
+          "Клиент: Договорились, спасибо, Анна!"
+        ],
+        checklist: [
+          { title: "Приветствие и бренд завода", passed: true, comment: "Названо имя и специализация завода" },
+          { title: "Выявление потребности и ТЗ", passed: true, comment: "Квалификация КМ/КМД, аттестация НАКС" },
+          { title: "Фиксация ориентировочных сроков", passed: true, comment: "Точный дедлайн КП (пятница 15:00) и отгрузки" },
+          { title: "Договоренность о следующем шаге", passed: true, comment: "Назначен контрольный созвон в пятницу 16:00" },
+          { title: "Деловой тон и клиентоориентированность", passed: true, comment: "Вежливый экспертный диалог" }
+        ],
+        taskCreated: null
+      }
+    };
+
+    const PROMPTER_DATA = {
+      CLIENT_001: {
+        debt: "185 000 ₽",
+        debtSub: "Просрочено на 6 дней",
+        debtBadge: "● ДОЛГ ПРОСРОЧЕН",
+        debtColor: "text-rose-400",
+        limit: "200 000 ₽",
+        lastPay: "15.09.2026",
+        fg: "200 шт.",
+        prod: "3 раб. дня",
+        metal: "Уголок 100х100х8 ст3пс в наличии (4.8 т)",
+        cap: "Завтра, смена №1",
+        rec: "«У клиента долг <b>185 000 ₽</b> по накладной №412. На складе уже готово <b>200 шт.</b>, остаток партии доизготовим за 3 дня.<br><br>💡 <b>РЕКОМЕНДАЦИЯ:</b> Предложи клиенту отгрузить готовые 200 шт. сразу под условие <u>закрытия старого долга + 50% предоплаты</u> за новую партию!»"
+      },
+      CLIENT_002: {
+        debt: "0 ₽",
+        debtSub: "Кредитная история безупречна",
+        debtBadge: "● ЧИСТАЯ ИСТОРИЯ",
+        debtColor: "text-emerald-400",
+        limit: "5 000 000 ₽",
+        lastPay: "28.09.2026",
+        fg: "0 шт. (под заказ)",
+        prod: "18 раб. дней",
+        metal: "Лист 09Г2С 12-25 мм (82 т на складе)",
+        cap: "12 октября (линия сварной балки)",
+        rec: "«У клиента нет долгов. Металл 09Г2С в наличии.<br><br>💡 <b>РЕКОМЕНДАЦИЯ:</b> Согласовывай срок отгрузки <b>18 рабочих дней</b> с фиксацией стоимости сырья при выставлении счета до четверга.»"
+      }
+    };
+
+    const AUDIT_DATA = [
+      {
+        entity: "Заказ на производство №ПЗ-1084",
+        severity: "CRITICAL",
+        badge: "bg-rose-500/20 text-rose-400 border-rose-500/40",
+        responsible: "Кузнецов В.Г. (Нач. участка резки)",
+        hours: "38 ч. без движения",
+        desc: "Смена открыта 38 часов назад, статус не переведен в «В работе». Риск срыва контракта с ПАО «ГазПромНефть»."
+      },
+      {
+        entity: "Партия выпуска №ВЫП-412 (Фланцы 250 шт.)",
+        severity: "HIGH",
+        badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+        responsible: "Филиппов С.М. (Мастер смены)",
+        hours: "16 ч. без списания",
+        desc: "250 шт. продукции оприходованы на склад ГП, но требование-накладная на списание круга ст20 не проведено. Искажение себестоимости."
+      },
+      {
+        entity: "Платежное поручение №ПП-892 (Аванс поставщику)",
+        severity: "MEDIUM",
+        badge: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+        responsible: "Васильева Е.А. (Бухгалтер)",
+        hours: "8 ч.",
+        desc: "Не заполнена аналитическая статья движения денежных средств (ДДС: «Приобретение сырья»). Блокирует управленческий баланс."
+      }
+    ];
+
+    function switchTab(tab) {
+      ['call', 'prompter', 'audit', 'rop', 'tg'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).className = "px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+      });
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).className = "px-4 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow";
+    }
+
+    function loadCall(type) {
+      const data = SAMPLE_CALLS[type];
+      document.getElementById('call-id-badge').innerText = data.id;
+      document.getElementById('call-client-title').innerText = data.client;
+      document.getElementById('call-manager-title').innerText = "Менеджер: " + data.manager;
+      document.getElementById('call-score-badge').innerText = data.score;
+      document.getElementById('call-score-badge').className = `px-3 py-1 rounded-xl text-sm font-bold border ${data.scoreBadge}`;
+
+      // Render transcript
+      const trBox = document.getElementById('call-transcript-box');
+      trBox.innerHTML = data.transcript.map(line => `<div>${line}</div>`).join('');
+
+      // Render checklist
+      const chBox = document.getElementById('call-checklist-container');
+      chBox.innerHTML = data.checklist.map(item => `
+        <div class="flex items-center justify-between p-2.5 bg-gray-950/60 rounded-xl border border-gray-900 text-xs">
+          <div>
+            <div class="font-semibold text-white">${item.title}</div>
+            <div class="text-slate-400 text-[11px]">${item.comment}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-xs font-bold ${item.passed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+            ${item.passed ? '✓ СОБЛЮДЕН' : '✗ ПРОВАЛ'}
+          </span>
+        </div>
+      `).join('');
+
+      // Render reaction
+      const rxBox = document.getElementById('call-reaction-box');
+      if (data.taskCreated) {
+        rxBox.innerHTML = `
+          <div class="p-3 bg-indigo-950/30 rounded-xl border border-indigo-500/30">
+            <div class="text-xs font-bold text-indigo-400 uppercase font-mono">Таймлайн сделки Битрикс24:</div>
+            <div class="text-xs text-slate-300 mt-1">Опубликован аудит звонка (${data.score}) с перечнем замечаний.</div>
+          </div>
+          <div class="p-3 bg-rose-950/40 rounded-xl border border-rose-500/40">
+            <div class="flex items-center justify-between text-xs font-bold text-rose-400 uppercase font-mono">
+              <span>⚡️ Авто-постановка задачи (tasks.task.add)</span>
+              <span class="px-2 py-0.5 bg-rose-500 text-white rounded text-[10px]">ВЫСОКИЙ ПРИОРИТЕТ</span>
+            </div>
+            <div class="font-bold text-sm text-white mt-1">${data.taskCreated.title}</div>
+            <div class="text-xs text-slate-300 mt-1">Ответственный: <b>${data.taskCreated.responsible}</b> | Дедлайн: <b>${data.taskCreated.deadline}</b></div>
+          </div>
+        `;
+      } else {
+        rxBox.innerHTML = `
+          <div class="p-3 bg-emerald-950/30 rounded-xl border border-emerald-500/30">
+            <div class="text-xs font-bold text-emerald-400 uppercase font-mono">Таймлайн сделки Битрикс24:</div>
+            <div class="text-xs text-slate-300 mt-1">Опубликован отчет: звонок эталонный (${data.score}). Замечаний нет. Задачи на исправление не требуются.</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderPrompter() {
+      const key = document.getElementById('prompter-client-select').value;
+      const d = PROMPTER_DATA[key];
+      document.getElementById('prompt-debt-val').innerText = d.debt;
+      document.getElementById('prompt-debt-sub').innerText = d.debtSub;
+      document.getElementById('prompt-fin-badge').innerText = d.debtBadge;
+      document.getElementById('prompt-fin-badge').className = d.debtColor;
+      document.getElementById('prompt-limit-val').innerText = d.limit;
+      document.getElementById('prompt-lastpay-val').innerText = d.lastPay;
+      document.getElementById('prompt-fg-val').innerText = d.fg;
+      document.getElementById('prompt-prod-val').innerText = d.prod;
+      document.getElementById('prompt-metal-val').innerText = d.metal;
+      document.getElementById('prompt-cap-val').innerText = d.cap;
+      document.getElementById('prompt-recommendation-box').innerHTML = d.rec;
+    }
+
+    function renderAuditCards() {
+      const container = document.getElementById('audit-cards-container');
+      container.innerHTML = AUDIT_DATA.map(item => `
+        <div class="glass-card rounded-2xl p-5 border border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${item.badge}">${item.severity}</span>
+              <span class="font-bold text-white text-base">${item.entity}</span>
+            </div>
+            <div class="text-xs text-slate-400">Ответственный: <b class="text-slate-200">${item.responsible}</b> | Простой: <b class="text-rose-400">${item.hours}</b></div>
+            <div class="text-xs text-slate-300 mt-1">${item.desc}</div>
+          </div>
+          <button onclick="alert('Уведомление отправлено в Telegram сотруднику: ${item.responsible}')" class="whitespace-nowrap px-4 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-300 rounded-xl text-xs font-semibold">
+            💬 Сигнализировать сотруднику
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function runAuditSimulation() {
+      alert('Hermes Agent успешно опросил HTTP-сервис 1C:ERP. Обнаружено 3 расхождения. Сводка директору обновлена.');
+    }
+
+    // Telegram Simulator Logic
+    function appendTgMessage(html, isUser=false) {
+      const box = document.getElementById('tg-chat-history');
+      const div = document.createElement('div');
+      div.className = isUser 
+        ? "p-3 bg-indigo-600 rounded-2xl rounded-tr-none text-white max-w-sm ml-auto text-xs" 
+        : "p-3 bg-gray-900 rounded-2xl rounded-tl-none border border-gray-800 max-w-sm text-slate-200 text-xs";
+      div.innerHTML = html;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendTgAction(action) {
+      if (action === 'voice') {
+        appendTgMessage("🎙 <i>[Голосовое сообщение 0:04]: «Поставь задачу технологу Петрову проверить чертеж партии к 15:00 срочно»</i>", true);
+        setTimeout(() => {
+          appendTgMessage(`
+            ✅ <b>Задача создана в Битрикс24</b> (ID #1024)<br>
+            📌 <b>Тема:</b> Проверить чертеж партии<br>
+            👤 <b>Исполнитель:</b> Петров Михаил (Ведущий технолог)<br>
+            ⏰ <b>Дедлайн:</b> Сегодня к 15:00<br>
+            🔥 <b>Приоритет:</b> Высокий ⚡️<br>
+            🔔 Исполнителю отправлено напоминание.
+          `);
+        }, 800);
+      } else if (action === 'call') {
+        appendTgMessage("/call", true);
+        setTimeout(() => {
+          appendTgMessage(`
+            🤖 <b>HERMES: Анализ звонка CALL_2026_091</b><br>
+            📊 <b>Оценка:</b> 4.5 / 10 🔴<br>
+            👤 Менеджер Иванов Сергей | Клиент: ООО «СеверСпецСтрой»<br>
+            ❌ Не зафиксирован следующий шаг<br>
+            ❌ Сленг («короче», «навскидку»)<br>
+            ⚡️ Поставлена авто-задача в CRM на срочный перезвон!
+          `);
+        }, 600);
+      } else if (action === 'prompter') {
+        appendTgMessage("/prompter", true);
+        setTimeout(() => {
+          appendTgMessage(`
+            🧠 <b>1C:ERP СУФЛЁР: ООО «СеверСпецСтрой»</b><br>
+            🔴 Долг: 185 000 ₽ (просрочка 6 дн.)<br>
+            📦 Склад ГП: 200 шт. в наличии<br>
+            ⚙️ Довыпуск: 3 дня (металл есть)<br>
+            💡 <b>СОВЕТ:</b> Отгрузить 200 шт. только под закрытие долга + 50% аванса!
+          `);
+        }, 600);
+      } else if (action === 'audit') {
+        appendTgMessage("/audit", true);
+        setTimeout(() => {
+          appendTgMessage(`
+            🚨 <b>1C:ERP АУДИТ: 3 расхождения</b><br>
+            🔴 Заказ №ПЗ-1084: простой 38 ч. (Кузнецов В.Г.)<br>
+            🟠 Выпуск №ВЫП-412: нет списания металла (Филиппов С.М.)<br>
+            🟡 ПП №892: нет статьи ДДС (Васильева Е.А.)
+          `);
+        }, 600);
+      } else if (action === 'report') {
+        appendTgMessage("/report", true);
+        setTimeout(() => {
+          appendTgMessage(`
+            📊 <b>ИТОГИ ДНЯ ДЛЯ РОПа:</b><br>
+            • Звонков: 45 | Средний балл: <b>7.8/10</b><br>
+            🥇 Смирнова: 9.4 (18 звонков)<br>
+            ⚠️ Иванов: 6.2 (3 зависших лида без шага)<br>
+            🛑 Предотвращено 2 отгрузки должникам на 425 000 ₽.
+          `);
+        }, 600);
+      }
+    }
+
+    function sendTgCustom() {
+      const input = document.getElementById('tg-input');
+      const text = input.value.trim();
+      if (!text) return;
+      appendTgMessage(text, true);
+      input.value = '';
+      setTimeout(() => {
+        appendTgMessage(`
+          ✅ <b>Поручение принято:</b> «${text}»<br>
+          📌 Создана задача в Битрикс24.<br>
+          Контроль тайминга активирован.
+        `);
+      }, 700);
+    }
+
+    // Init
+    window.onload = function() {
+      loadCall('poor');
+      renderPrompter();
+      renderAuditCards();
+    };
+  </script>
+</body>
+</html>
