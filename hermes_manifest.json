@@ -1,0 +1,42 @@
+{
+  "name": "hermes-b2b-supervisor",
+  "version": "1.0.0",
+  "description": "Enterprise B2B supervisor connecting Hermes Agent with Bitrix24 and 1C:ERP",
+  "author": "Anton Ilyasov (antoshik86)",
+  "skills": [
+    {
+      "name": "b2b-sales-auditor",
+      "path": "skills/b2b-sales-auditor/SKILL.md",
+      "category": "crm-telephony"
+    },
+    {
+      "name": "erp-copilot",
+      "path": "skills/erp-copilot/SKILL.md",
+      "category": "erp-sales"
+    },
+    {
+      "name": "erp-production-auditor",
+      "path": "skills/erp-production-auditor/SKILL.md",
+      "category": "erp-audit"
+    },
+    {
+      "name": "voice-task-dispatcher",
+      "path": "skills/voice-task-dispatcher/SKILL.md",
+      "category": "voice-task-dispatch"
+    }
+  ],
+  "integrations": {
+    "bitrix24": {
+      "required_scopes": ["crm", "tasks", "telephony"],
+      "webhook_support": true
+    },
+    "1c_erp": {
+      "protocol": "HTTP-services / REST API",
+      "recommended_format": "JSON"
+    },
+    "telegram": {
+      "voice_transcription": "Whisper",
+      "bot_relay": true
+    }
+  }
+}
