@@ -174,72 +174,146 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 2: СУФЛЁР 1C:ERP -->
+    <!-- TAB 2: СУФЛЁР 1C:ERP ПО ИНН И ДОСЬЕ -->
     <!-- ============================================== -->
     <div id="view-prompter" class="space-y-6 hidden">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-white">Интеллектуальный суфлёр менеджера по данным 1C:ERP</h2>
-          <p class="text-sm text-slate-400">Мгновенный подъем дебиторки, свободных остатков на складе ГП, сырья и графика производства</p>
-        </div>
-        <div>
-          <select id="prompter-client-select" onchange="renderPrompter()" class="bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500">
-            <option value="CLIENT_001">ООО «СеверСпецСтрой» (Закладные МН-1)</option>
-            <option value="CLIENT_002">АО «МостоТрестГрупп» (Балки 09Г2С)</option>
-          </select>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-2xl font-bold text-white">Интеллектуальный суфлёр 1C:ERP & Досье по ИНН</h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">1C OData / HTTP-Service Live</span>
+          </div>
+          <p class="text-sm text-slate-400 mt-1">Мгновенный поиск по ИНН, поднятие действующего пула документов из 1С:ERP, их производственных стадий и тактические подсказки менеджеру</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Карточка финансов -->
-        <div class="glass-card rounded-2xl p-5 border border-gray-800">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
-            <span>РЕГИСТР ВЗАИМОРАСЧЕТОВ</span>
-            <span id="prompt-fin-badge" class="text-rose-400">● ДОЛГ</span>
+      <!-- Search by INN / Client Bar -->
+      <div class="glass-card rounded-2xl p-4 border border-gray-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div class="flex-1 flex items-center space-x-3">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs">ИНН:</span>
+            <input id="prompter-inn-input" type="text" placeholder="Введите ИНН (напр. 7702419820)..." value="7702419820" class="w-full bg-gray-950 border border-gray-700 text-white rounded-xl pl-12 pr-4 py-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono">
           </div>
-          <div class="text-2xl font-bold text-white" id="prompt-debt-val">185 000 ₽</div>
-          <div class="text-xs text-rose-400 mt-1 font-medium" id="prompt-debt-sub">Просрочено на 6 дней</div>
-          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
-            <div class="flex justify-between"><span>Кредитный лимит:</span><span class="text-slate-200" id="prompt-limit-val">200 000 ₽</span></div>
-            <div class="flex justify-between"><span>Посл. платеж:</span><span class="text-slate-200" id="prompt-lastpay-val">15.09.2026</span></div>
+          <button onclick="searchClientByInn()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow transition whitespace-nowrap flex items-center space-x-1.5">
+            <span>🔍 Найти в 1С:ERP</span>
+          </button>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs overflow-x-auto pb-1 md:pb-0">
+          <span class="text-slate-400 whitespace-nowrap">Быстрый выбор:</span>
+          <button onclick="selectQuickClient('7702419820')" class="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-slate-300 border border-gray-800 whitespace-nowrap">
+            7702419820 (СеверСпецСтрой)
+          </button>
+          <button onclick="selectQuickClient('5406129840')" class="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-slate-300 border border-gray-800 whitespace-nowrap">
+            5406129840 (МостоТрест)
+          </button>
+          <button onclick="selectQuickClient('4205318920')" class="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-slate-300 border border-gray-800 whitespace-nowrap">
+            4205318920 (КузбассШахтоСтрой)
+          </button>
+        </div>
+      </div>
+
+      <!-- Client Dossier Header Card -->
+      <div class="glass-card rounded-2xl p-5 border border-gray-800">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-800">
+          <div>
+            <div class="flex items-center space-x-3">
+              <h3 class="text-xl font-bold text-white" id="dossier-name">ООО «СеверСпецСтрой»</h3>
+              <span id="dossier-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">ВНИМАНИЕ: ДЕБИТОРКА</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 mt-1 font-mono">
+              <span>ИНН: <b class="text-slate-200" id="dossier-inn">7702419820</b></span>
+              <span>КПП: <b class="text-slate-200" id="dossier-kpp">770201001</b></span>
+              <span>Основной договор: <b class="text-slate-200" id="dossier-contract">№П-2026/04 от 12.01.2026</b></span>
+              <span>Условия расчетов: <b class="text-indigo-400" id="dossier-terms">Предоплата 50% + отсрочка 10 дн.</b></span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-400 font-mono">ПЛАТЕЖНЫЙ РЕЙТИНГ 1С</div>
+            <div class="text-lg font-bold text-amber-400" id="dossier-rating">B- (Средний риск)</div>
+            <div class="text-[11px] text-slate-400">Менеджер в 1С: <b class="text-slate-200" id="dossier-manager">Иванов Сергей</b></div>
           </div>
         </div>
 
-        <!-- Карточка склада ГП -->
-        <div class="glass-card rounded-2xl p-5 border border-gray-800">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
-            <span>СКЛАД ГОТОВОЙ ПРОДУКЦИИ</span>
-            <span class="text-emerald-400">● ОСТАТКИ</span>
+        <!-- 3 KPIs (Debt, FG, Production) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5">
+          <!-- Карточка финансов -->
+          <div class="p-4 bg-gray-950/60 rounded-xl border border-gray-900">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+              <span>САЛЬДО ВЗАИМОРАСЧЕТОВ</span>
+              <span id="prompt-fin-badge" class="text-rose-400">● ДОЛГ</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="prompt-debt-val">185 000 ₽</div>
+            <div class="text-xs text-rose-400 mt-1 font-medium" id="prompt-debt-sub">Просрочено на 6 дней</div>
+            <div class="mt-3 pt-3 border-t border-gray-900 text-xs space-y-1 text-slate-400">
+              <div class="flex justify-between"><span>Кредитный лимит:</span><span class="text-slate-200" id="prompt-limit-val">200 000 ₽</span></div>
+              <div class="flex justify-between"><span>Посл. платеж:</span><span class="text-slate-200" id="prompt-lastpay-val">15.09.2026</span></div>
+            </div>
           </div>
-          <div class="text-2xl font-bold text-white" id="prompt-fg-val">200 шт.</div>
-          <div class="text-xs text-emerald-400 mt-1 font-medium">Готово к немедленной отгрузке</div>
-          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
-            <div class="flex justify-between"><span>Локация:</span><span class="text-slate-200">Цех №3 (Стеллаж Б-12)</span></div>
-            <div class="flex justify-between"><span>Резерв под заказ:</span><span class="text-slate-200">Свободно 100%</span></div>
+
+          <!-- Карточка склада ГП -->
+          <div class="p-4 bg-gray-950/60 rounded-xl border border-gray-900">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+              <span>СКЛАД ГОТОВОЙ ПРОДУКЦИИ (ГП)</span>
+              <span class="text-emerald-400">● ОСТАТКИ</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="prompt-fg-val">200 шт.</div>
+            <div class="text-xs text-emerald-400 mt-1 font-medium" id="prompt-fg-sub">Готово к немедленной отгрузке</div>
+            <div class="mt-3 pt-3 border-t border-gray-900 text-xs space-y-1 text-slate-400">
+              <div class="flex justify-between"><span>Локация:</span><span class="text-slate-200">Цех №3 (Стеллаж Б-12)</span></div>
+              <div class="flex justify-between"><span>Резерв под заказ:</span><span class="text-slate-200">Свободно 100%</span></div>
+            </div>
+          </div>
+
+          <!-- Карточка производства -->
+          <div class="p-4 bg-gray-950/60 rounded-xl border border-gray-900">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+              <span>СЫРЬЁ & ЦЕХ (МЕТАЛЛ)</span>
+              <span class="text-indigo-400">● ПРОИЗВОДСТВО</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="prompt-prod-val">3 раб. дня</div>
+            <div class="text-xs text-indigo-400 mt-1 font-medium" id="prompt-metal-val">Металл в наличии на складе</div>
+            <div class="mt-3 pt-3 border-t border-gray-900 text-xs space-y-1 text-slate-400">
+              <div class="flex justify-between"><span>Свободные мощности:</span><span class="text-slate-200" id="prompt-cap-val">Завтра, смена №1</span></div>
+              <div class="flex justify-between"><span>Спецификация:</span><span class="text-slate-200">Уголок 100х100х8 ст3</span></div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Карточка производства -->
-        <div class="glass-card rounded-2xl p-5 border border-gray-800">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
-            <span>ЦЕХ И СЫРЬЁ (МЕТАЛЛ)</span>
-            <span class="text-indigo-400">● ПРОИЗВОДСТВО</span>
-          </div>
-          <div class="text-2xl font-bold text-white" id="prompt-prod-val">3 раб. дня</div>
-          <div class="text-xs text-indigo-400 mt-1 font-medium" id="prompt-metal-val">Металл в наличии на складе</div>
-          <div class="mt-4 pt-4 border-t border-gray-800 text-xs space-y-1 text-slate-400">
-            <div class="flex justify-between"><span>Свободные мощности:</span><span class="text-slate-200" id="prompt-cap-val">Завтра, смена №1</span></div>
-            <div class="flex justify-between"><span>Спецификация:</span><span class="text-slate-200">Уголок 100х100х8 ст3</span></div>
-          </div>
+      <!-- Active Documents and Stages Table -->
+      <div class="glass-card rounded-2xl p-5 border border-gray-800">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-white text-base">Действующие документы в 1C:ERP и стадии исполнения</h3>
+          <span class="text-xs font-mono text-slate-400" id="dossier-docs-count">Всего: 4 документа в работе</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 border-b border-gray-800 font-mono">
+              <tr>
+                <th class="pb-3">Документ 1С:ERP</th>
+                <th class="pb-3">Дата</th>
+                <th class="pb-3">Номенклатура / Содержание</th>
+                <th class="pb-3">Сумма</th>
+                <th class="pb-3">Текущая стадия в 1С</th>
+                <th class="pb-3">План отгрузки</th>
+                <th class="pb-3">Статус оплаты</th>
+              </tr>
+            </thead>
+            <tbody id="dossier-docs-tbody" class="divide-y divide-gray-800/60 text-slate-200">
+              <!-- Docs JS -->
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- Итоговый совет суфлёра -->
       <div class="glass-card rounded-2xl p-6 border-l-4 border-indigo-500 bg-gradient-to-r from-indigo-950/40 to-gray-900/60 shadow-xl">
         <div class="flex items-center space-x-2 text-indigo-400 font-bold mb-3 text-sm">
-          <span>💡 ТАКТИЧЕСКИЙ СОВЕТ HERMES AGENT МЕНЕДЖЕРУ:</span>
+          <span>💡 ТАКТИЧЕСКИЙ СОВЕТ HERMES AGENT МЕНЕДЖЕРУ ДЛЯ ТЕКУЩЕГО ЗВОНКА:</span>
         </div>
-        <div class="text-slate-200 text-base leading-relaxed" id="prompt-recommendation-box">
+        <div class="text-slate-200 text-sm leading-relaxed" id="prompt-recommendation-box">
           <!-- Рекомендация JS -->
         </div>
         <div class="mt-4 flex space-x-3">
@@ -701,31 +775,168 @@
     };
 
     const PROMPTER_DATA = {
-      CLIENT_001: {
+      "7702419820": {
+        name: "ООО «СеверСпецСтрой»",
+        inn: "7702419820",
+        kpp: "770201001",
+        contract: "№П-2026/04 от 12.01.2026 (Поставка МК)",
+        terms: "Предоплата 50% + отсрочка 10 дн.",
+        rating: "B- (Средний риск, просрочки)",
+        statusBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+        statusText: "⚠️ ВНИМАНИЕ: ПРОСРОЧЕН ДОЛГ",
+        manager: "Иванов Сергей",
         debt: "185 000 ₽",
-        debtSub: "Просрочено на 6 дней",
+        debtSub: "Просрочено на 6 дней по РТУ-418",
         debtBadge: "● ДОЛГ ПРОСРОЧЕН",
         debtColor: "text-rose-400",
         limit: "200 000 ₽",
-        lastPay: "15.09.2026",
+        lastPay: "15.09.2026 (70 000 ₽)",
         fg: "200 шт.",
+        fgSub: "Закладные МН-1 (Цех №3, Стеллаж Б-12)",
         prod: "3 раб. дня",
         metal: "Уголок 100х100х8 ст3пс в наличии (4.8 т)",
-        cap: "Завтра, смена №1",
-        rec: "«У клиента долг <b>185 000 ₽</b> по накладной №412. На складе уже готово <b>200 шт.</b>, остаток партии доизготовим за 3 дня.<br><br>💡 <b>РЕКОМЕНДАЦИЯ:</b> Предложи клиенту отгрузить готовые 200 шт. сразу под условие <u>закрытия старого долга + 50% предоплаты</u> за новую партию!»"
+        cap: "Завтра, смена №1 (участок сварки)",
+        rec: "«У клиента висит просроченный долг <b>185 000 ₽</b> по накладной №РТУ-418. На складе готовой продукции уже есть <b>200 шт.</b> закладных МН-1, остаток доизготовим за 3 дня.<br><br>💡 <b>РЕКОМЕНДАЦИЯ МЕНЕДЖЕРУ:</b> Прямо в звонке предложи отгрузить готовые 200 шт. под условие <u>закрытия старого долга 185 тыс. + 50% аванса</u> за новый объем. Новую партию без закрытия долга в производство не отдавать!»",
+        docs: [
+          {
+            doc: "Заказ клиента №ЗК-1042",
+            date: "02.10.2026",
+            items: "Закладные детали МН-1 (400 шт.)",
+            sum: "380 000 ₽",
+            stage: "В производстве (Готовность 50%)",
+            stageBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            shipmentPlan: "18.10.2026",
+            payStatus: "Аванс 50% получен",
+            payBadge: "bg-emerald-500/20 text-emerald-400"
+          },
+          {
+            doc: "Заказ на производство №ПЗ-891",
+            date: "04.10.2026",
+            items: "Сварка закладных МН-1-1 (400 шт.)",
+            sum: "210 000 ₽ (с/с)",
+            stage: "Сварочный участок (Смена №2)",
+            stageBadge: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+            shipmentPlan: "16.10.2026",
+            payStatus: "Обеспечен сырьем 100%",
+            payBadge: "bg-indigo-500/20 text-indigo-400"
+          },
+          {
+            doc: "Реализация ТТУ №РТУ-418",
+            date: "25.09.2026",
+            items: "Анкерные болты М24х1000 (80 шт.)",
+            sum: "185 000 ₽",
+            stage: "Отгружен покупателю (УПД подписан)",
+            stageBadge: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+            shipmentPlan: "Выполнено",
+            payStatus: "ПРОСРОЧЕНО (6 дн.) 🛑",
+            payBadge: "bg-rose-500/20 text-rose-400 font-bold"
+          },
+          {
+            doc: "Акт сверки №АС-104",
+            date: "01.10.2026",
+            items: "Взаиморасчеты за 3 кв. 2026",
+            sum: "Сальдо 185 000 ₽",
+            stage: "Подписан со стороны 1С",
+            stageBadge: "bg-gray-800 text-slate-300",
+            shipmentPlan: "—",
+            payStatus: "Ждем скан клиента",
+            payBadge: "bg-amber-500/20 text-amber-400"
+          }
+        ]
       },
-      CLIENT_002: {
+      "5406129840": {
+        name: "АО «МостоТрестГрупп»",
+        inn: "5406129840",
+        kpp: "540601001",
+        contract: "№ГК-2026/89 от 02.03.2026 (Мостовые конструкции)",
+        terms: "Постоплата 30 дней (Госконтракт)",
+        rating: "AAA (Крупнейший заказчик, высшая надежность)",
+        statusBadge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+        statusText: "✓ НАДЕЖНЫЙ ПАРТНЕР (VIP)",
+        manager: "Смирнова Анна",
         debt: "0 ₽",
         debtSub: "Кредитная история безупречна",
         debtBadge: "● ЧИСТАЯ ИСТОРИЯ",
         debtColor: "text-emerald-400",
-        limit: "5 000 000 ₽",
-        lastPay: "28.09.2026",
+        limit: "15 000 000 ₽",
+        lastPay: "28.09.2026 (4 200 000 ₽)",
         fg: "0 шт. (под заказ)",
+        fgSub: "Позаказный цикл 18 рабочих дней",
         prod: "18 раб. дней",
         metal: "Лист 09Г2С 12-25 мм (82 т на складе)",
-        cap: "12 октября (линия сварной балки)",
-        rec: "«У клиента нет долгов. Металл 09Г2С в наличии.<br><br>💡 <b>РЕКОМЕНДАЦИЯ:</b> Согласовывай срок отгрузки <b>18 рабочих дней</b> с фиксацией стоимости сырья при выставлении счета до четверга.»"
+        cap: "12 октября (линия сварной балки цех №1)",
+        rec: "«У клиента нет долгов, лимит до 15 млн ₽. Сырьё 09Г2С на складе в полном объёме.<br><br>💡 <b>РЕКОМЕНДАЦИЯ МЕНЕДЖЕРУ:</b> Согласовывай срок отгрузки <b>18 рабочих дней</b> без предоплаты (по условиям госконтракта). Фиксируй цену металла в спецификации при выставлении счета до четверга!»",
+        docs: [
+          {
+            doc: "Заказ клиента №ЗК-1038",
+            date: "15.09.2026",
+            items: "Балки сварные 140Б ст 09Г2С (35 тонн)",
+            sum: "4 200 000 ₽",
+            stage: "В производстве (Готовность 85%)",
+            stageBadge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+            shipmentPlan: "20.10.2026",
+            payStatus: "Оплата по факту отгрузки",
+            payBadge: "bg-indigo-500/20 text-indigo-400"
+          },
+          {
+            doc: "Заказ на производство №ПЗ-860",
+            date: "18.09.2026",
+            items: "Сборка мостовых балок (Линия №1)",
+            sum: "2 800 000 ₽ (с/с)",
+            stage: "Контрольная сборка и УЗК-контроль",
+            stageBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            shipmentPlan: "19.10.2026",
+            payStatus: "Аттестация НАКС пройдена",
+            payBadge: "bg-emerald-500/20 text-emerald-400"
+          }
+        ]
+      },
+      "4205318920": {
+        name: "ПАО «КузбассШахтоСтрой»",
+        inn: "4205318920",
+        kpp: "420501001",
+        contract: "№ШС-2025/11 от 15.11.2025 (Шахтная крепь)",
+        terms: "Предоплата 100%",
+        rating: "C+ (Высокий кредитный риск, только предоплата)",
+        statusBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+        statusText: "🛑 СТРОГО ПРЕДОПЛАТА 100%",
+        manager: "Ковалев Дмитрий",
+        debt: "420 000 ₽",
+        debtSub: "Просрочка 24 дня (Претензионная работа)",
+        debtBadge: "● ПРЕТЕНЗИЯ В ЮРОТДЕЛЕ",
+        debtColor: "text-rose-400",
+        limit: "0 ₽ (Заблокирован)",
+        lastPay: "12.07.2026 (150 000 ₽)",
+        fg: "120 комплектов",
+        fgSub: "Шахтная крепь СВП-27 (Заблокировано к отгрузке)",
+        prod: "Заблокировано",
+        metal: "Металл в резерве заморожен",
+        cap: "Отгрузка заблокирована службой безопасности",
+        rec: "«Внимание! По клиенту <b>ведется претензионная работа</b> юротделом. Просроченная задолженность 420 000 ₽ свыше 24 дней.<br><br>💡 <b>РЕКОМЕНДАЦИЯ МЕНЕДЖЕРУ:</b> Никаких новых обещаний по отгрузкам! Переводить диалог строго на финансового контролера или требовать гарантийное письмо с графиком гашения долга до конца недели.»",
+        docs: [
+          {
+            doc: "Претензия №ПР-44",
+            date: "28.09.2026",
+            items: "Взыскание долга по договору №ШС-2025/11",
+            sum: "420 000 ₽ + пени 32 000 ₽",
+            stage: "Передано в арбитраж",
+            stageBadge: "bg-rose-500/20 text-rose-400 font-bold",
+            shipmentPlan: "Заблокировано",
+            payStatus: "ДЕФОЛТ ПЛАТЕЖА 🛑",
+            payBadge: "bg-rose-600 text-white font-bold"
+          },
+          {
+            doc: "Заказ клиента №ЗК-992",
+            date: "10.08.2026",
+            items: "Крепь арочная СВП-27 (120 компл.)",
+            sum: "1 450 000 ₽",
+            stage: "Готово на складе (Арестовано СБ)",
+            stageBadge: "bg-amber-500/20 text-amber-400",
+            shipmentPlan: "Запрет отгрузки",
+            payStatus: "Оплаты нет",
+            payBadge: "bg-rose-500/20 text-rose-400"
+          }
+        ]
       }
     };
 
@@ -1528,9 +1739,42 @@
       `).join('');
     }
 
-    function renderPrompter() {
-      const key = document.getElementById('prompter-client-select').value;
-      const d = PROMPTER_DATA[key];
+    function searchClientByInn() {
+      const innInput = document.getElementById('prompter-inn-input');
+      const query = innInput ? innInput.value.trim() : '';
+      renderPrompter(query);
+    }
+
+    function selectQuickClient(inn) {
+      const innInput = document.getElementById('prompter-inn-input');
+      if (innInput) innInput.value = inn;
+      renderPrompter(inn);
+    }
+
+    function renderPrompter(targetInn = '7702419820') {
+      let d = PROMPTER_DATA[targetInn];
+      if (!d) {
+        // Try finding by name or fallback
+        const foundKey = Object.keys(PROMPTER_DATA).find(k => 
+          PROMPTER_DATA[k].name.toLowerCase().includes(targetInn.toLowerCase()) || k.includes(targetInn)
+        );
+        d = foundKey ? PROMPTER_DATA[foundKey] : PROMPTER_DATA['7702419820'];
+      }
+
+      // Update Dossier Header
+      document.getElementById('dossier-name').innerText = d.name;
+      document.getElementById('dossier-inn').innerText = d.inn;
+      document.getElementById('dossier-kpp').innerText = d.kpp;
+      document.getElementById('dossier-contract').innerText = d.contract;
+      document.getElementById('dossier-terms').innerText = d.terms;
+      document.getElementById('dossier-rating').innerText = d.rating;
+      document.getElementById('dossier-manager').innerText = d.manager;
+      
+      const badgeEl = document.getElementById('dossier-status-badge');
+      badgeEl.className = `px-2.5 py-0.5 rounded-full text-xs font-bold border ${d.statusBadge}`;
+      badgeEl.innerText = d.statusText;
+
+      // Update 3 KPIs
       document.getElementById('prompt-debt-val').innerText = d.debt;
       document.getElementById('prompt-debt-sub').innerText = d.debtSub;
       document.getElementById('prompt-fin-badge').innerText = d.debtBadge;
@@ -1538,10 +1782,38 @@
       document.getElementById('prompt-limit-val').innerText = d.limit;
       document.getElementById('prompt-lastpay-val').innerText = d.lastPay;
       document.getElementById('prompt-fg-val').innerText = d.fg;
+      document.getElementById('prompt-fg-sub').innerText = d.fgSub;
       document.getElementById('prompt-prod-val').innerText = d.prod;
       document.getElementById('prompt-metal-val').innerText = d.metal;
       document.getElementById('prompt-cap-val').innerText = d.cap;
       document.getElementById('prompt-recommendation-box').innerHTML = d.rec;
+
+      // Render Docs Table
+      const docsCountEl = document.getElementById('dossier-docs-count');
+      if (docsCountEl) docsCountEl.innerText = `Всего: ${d.docs.length} документа в работе`;
+
+      const tbody = document.getElementById('dossier-docs-tbody');
+      if (tbody) {
+        tbody.innerHTML = d.docs.map(doc => `
+          <tr class="hover:bg-gray-900/50 transition">
+            <td class="py-3 font-semibold text-white font-mono">${doc.doc}</td>
+            <td class="py-3 text-slate-400 font-mono">${doc.date}</td>
+            <td class="py-3 text-slate-200 font-medium">${doc.items}</td>
+            <td class="py-3 font-mono font-bold text-white">${doc.sum}</td>
+            <td class="py-3">
+              <span class="px-2 py-0.5 rounded text-[11px] font-medium border ${doc.stageBadge}">
+                ${doc.stage}
+              </span>
+            </td>
+            <td class="py-3 text-slate-300 font-mono">${doc.shipmentPlan}</td>
+            <td class="py-3">
+              <span class="px-2 py-0.5 rounded text-[11px] ${doc.payBadge}">
+                ${doc.payStatus}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      }
     }
 
     function renderAuditCards() {
