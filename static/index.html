@@ -109,28 +109,28 @@
               <span class="text-xs text-slate-400" id="call-manager-title">Менеджер: Иванов Сергей</span>
             </div>
 
-            <!-- Fake Waveform -->
+            <!-- Live Audio Player with Voice Synthesis -->
             <div class="mt-4 p-3 bg-gray-950/60 rounded-xl border border-gray-800 flex items-center space-x-3">
-              <button class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white shadow">
-                ▶
+              <button id="btn-play-voice" onclick="toggleVoicePlayback()" title="Прослушать запись звонка" class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white shadow transition-all active:scale-95">
+                <span id="btn-play-icon" class="text-sm font-bold">▶</span>
               </button>
-              <div class="flex-1 flex items-center space-x-1 h-6">
-                <div class="w-1 bg-indigo-500 h-3 rounded"></div>
-                <div class="w-1 bg-indigo-500 h-5 rounded"></div>
-                <div class="w-1 bg-indigo-400 h-2 rounded"></div>
-                <div class="w-1 bg-indigo-400 h-6 rounded"></div>
-                <div class="w-1 bg-indigo-400 h-4 rounded"></div>
-                <div class="w-1 bg-indigo-500 h-5 rounded"></div>
-                <div class="w-1 bg-indigo-500 h-3 rounded"></div>
-                <div class="w-1 bg-indigo-400 h-2 rounded"></div>
-                <div class="w-1 bg-indigo-400 h-6 rounded"></div>
-                <div class="w-1 bg-indigo-500 h-4 rounded"></div>
-                <div class="w-1 bg-gray-700 h-3 rounded"></div>
-                <div class="w-1 bg-gray-700 h-5 rounded"></div>
-                <div class="w-1 bg-gray-700 h-2 rounded"></div>
-                <div class="w-1 bg-gray-700 h-6 rounded"></div>
+              <div id="waveform-bars" class="flex-1 flex items-center space-x-1 h-6">
+                <div class="waveform-bar w-1 bg-indigo-500 h-3 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-5 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-2 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-6 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-4 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-5 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-3 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-2 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-6 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-4 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-3 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-5 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-400 h-2 rounded transition-all duration-150"></div>
+                <div class="waveform-bar w-1 bg-indigo-500 h-6 rounded transition-all duration-150"></div>
               </div>
-              <span class="text-xs font-mono text-slate-400">01:42 / 01:42</span>
+              <span id="waveform-time" class="text-xs font-mono text-slate-400">00:00 / 00:25</span>
             </div>
 
             <!-- Transcript Body -->
@@ -520,6 +520,124 @@
       }
     ];
 
+    
+    // Voice Playback (SpeechSynthesis)
+    let isPlayingVoice = false;
+    let voiceUtteranceIndex = 0;
+    let voiceInterval = null;
+    let playbackSeconds = 0;
+    let activeCallType = 'poor';
+
+    function stopVoicePlayback() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      isPlayingVoice = false;
+      if (voiceInterval) {
+        clearInterval(voiceInterval);
+        voiceInterval = null;
+      }
+      const icon = document.getElementById('btn-play-icon');
+      if (icon) icon.innerText = '▶';
+      const btn = document.getElementById('btn-play-voice');
+      if (btn) btn.className = 'w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white shadow transition-all active:scale-95';
+      
+      // Reset waveform
+      document.querySelectorAll('.waveform-bar').forEach((bar, i) => {
+        bar.style.height = [12, 20, 8, 24, 16, 20, 12, 8, 24, 16, 12, 20, 8, 24][i % 14] + 'px';
+        bar.className = 'waveform-bar w-1 bg-indigo-500 rounded transition-all duration-150';
+      });
+      document.getElementById('waveform-time').innerText = '00:00 / 00:25';
+      
+      // Reset highlights in transcript
+      const trBox = document.getElementById('call-transcript-box');
+      if (trBox) {
+        Array.from(trBox.children).forEach(el => {
+          el.className = 'py-0.5 text-slate-300';
+        });
+      }
+    }
+
+    function toggleVoicePlayback() {
+      if (isPlayingVoice) {
+        stopVoicePlayback();
+        return;
+      }
+
+      if (!('speechSynthesis' in window)) {
+        alert('Ваш браузер не поддерживает Web Speech API. Рекомендуется использовать Chrome, Edge или Яндекс.Браузер.');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      isPlayingVoice = true;
+      playbackSeconds = 0;
+
+      const icon = document.getElementById('btn-play-icon');
+      if (icon) icon.innerText = '⏸';
+      const btn = document.getElementById('btn-play-voice');
+      if (btn) btn.className = 'w-9 h-9 rounded-lg bg-rose-600 hover:bg-rose-500 flex items-center justify-center text-white shadow transition-all animate-pulse';
+
+      // Waveform animation
+      voiceInterval = setInterval(() => {
+        playbackSeconds++;
+        const s = playbackSeconds % 60;
+        const m = Math.floor(playbackSeconds / 60);
+        document.getElementById('waveform-time').innerText = 
+          `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} / 00:25`;
+
+        document.querySelectorAll('.waveform-bar').forEach(bar => {
+          const h = Math.floor(Math.random() * 20) + 4;
+          bar.style.height = `${h}px`;
+          bar.className = 'waveform-bar w-1 bg-cyan-400 rounded transition-all duration-100';
+        });
+      }, 300);
+
+      const lines = SAMPLE_CALLS[activeCallType].transcript;
+      voiceUtteranceIndex = 0;
+
+      function speakNextLine() {
+        if (!isPlayingVoice || voiceUtteranceIndex >= lines.length) {
+          stopVoicePlayback();
+          return;
+        }
+
+        const rawLine = lines[voiceUtteranceIndex];
+        const colonIdx = rawLine.indexOf(':');
+        const speaker = colonIdx > -1 ? rawLine.substring(0, colonIdx) : '';
+        const cleanText = colonIdx > -1 ? rawLine.substring(colonIdx + 1).trim() : rawLine;
+        const isManager = speaker.indexOf('енеджер') > -1 || speaker.indexOf('Анна') > -1 || speaker.indexOf('Сергей') > -1;
+
+        // Highlight line in transcript
+        const trBox = document.getElementById('call-transcript-box');
+        if (trBox && trBox.children[voiceUtteranceIndex]) {
+          Array.from(trBox.children).forEach(el => el.className = 'py-0.5 text-slate-400');
+          const cur = trBox.children[voiceUtteranceIndex];
+          cur.className = 'py-1 px-2 rounded bg-indigo-600/30 text-white font-bold border-l-2 border-indigo-400 shadow-sm';
+          cur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = 'ru-RU';
+        utter.rate = isManager ? 1.05 : 1.0;
+        utter.pitch = isManager ? 1.0 : 1.15;
+
+        utter.onend = () => {
+          voiceUtteranceIndex++;
+          setTimeout(speakNextLine, 250);
+        };
+
+        utter.onerror = () => {
+          voiceUtteranceIndex++;
+          speakNextLine();
+        };
+
+        window.speechSynthesis.speak(utter);
+      }
+
+      speakNextLine();
+    }
+
     function switchTab(tab) {
       ['call', 'prompter', 'audit', 'rop', 'tg'].forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
@@ -530,6 +648,8 @@
     }
 
     function loadCall(type) {
+      activeCallType = type;
+      stopVoicePlayback();
       const data = SAMPLE_CALLS[type];
       document.getElementById('call-id-badge').innerText = data.id;
       document.getElementById('call-client-title').innerText = data.client;
