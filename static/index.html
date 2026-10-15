@@ -63,6 +63,9 @@
       <button onclick="switchTab('twin')" id="tab-twin" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
         👤 Цифровой двойник 1С & Б24
       </button>
+      <button onclick="switchTab('postmortem')" id="tab-postmortem" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        🔍 AI Постмортем инцидентов
+      </button>
       <button onclick="switchTab('rop')" id="tab-rop" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
         📊 Дашборд РОПа
       </button>
@@ -394,6 +397,104 @@
               </button>
             </div>
           </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- TAB: AI ПОСТМОРТЕМ ИНЦИДЕНТОВ И СДЕЛОК -->
+    <!-- ============================================== -->
+    <div id="view-postmortem" class="space-y-6 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-2xl font-bold text-white">AI Постмортем инцидентов & Разбор провалов</h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30">Executive Root Cause Analysis (RCA)</span>
+          </div>
+          <p class="text-sm text-slate-400 mt-1">Автоматическая реконструкция срыва контрактов по логам Битрикс24 и проводкам 1С:ERP, поиск коренной причины (5 Почему) и системные оргвыводы</p>
+        </div>
+        
+        <!-- Case Selector -->
+        <div class="flex items-center space-x-3 bg-gray-950 p-2 rounded-xl border border-gray-800">
+          <span class="text-xs text-slate-400 font-medium">Инцидент:</span>
+          <select id="postmortem-case-select" onchange="renderPostmortemCase()" class="bg-gray-900 border border-gray-700 text-white text-xs rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+            <option value="case1">Кейс #1: Уход клиента к конкуренту (-2.85 млн ₽) — Задержка КП</option>
+            <option value="case2">Кейс #2: Срыв срока отгрузки и штрафные пени (-320 тыс ₽) — 1С Простой цеха</option>
+            <option value="case3">Кейс #3: Рекламация и брак партии (-640 тыс ₽) — Устаревшая спецификация</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Financial Damage Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ФИНАНСОВЫЙ УЩЕРБ</div>
+          <div class="text-3xl font-bold text-rose-400 mt-2" id="pm-damage-sum">2 850 000 ₽</div>
+          <div class="text-xs text-rose-300 mt-1" id="pm-margin-loss">Упущенная маржа: 712 500 ₽</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ТОЧКА НЕВОЗВРАТА</div>
+          <div class="text-3xl font-bold text-white mt-2" id="pm-point-time">12.10 14:30</div>
+          <div class="text-xs text-slate-400 mt-1" id="pm-point-desc">Игнорирование запроса клиента</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ГЛАВНАЯ ПРИЧИНА (RCA)</div>
+          <div class="text-xl font-bold text-amber-400 mt-2 leading-tight" id="pm-rca-title">Межфункциональный сбой</div>
+          <div class="text-xs text-slate-300 mt-1" id="pm-rca-sub">Менеджер ↔ Технолог ↔ 1С</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">СИСТЕМНОЕ РЕШЕНИЕ</div>
+          <div class="text-xl font-bold text-emerald-400 mt-2 leading-tight" id="pm-action-short">Авто-триггер 1C ➔ CRM</div>
+          <div class="text-xs text-emerald-300 mt-1" id="pm-action-status">Внедрено агентом Hermes</div>
+        </div>
+      </div>
+
+      <!-- Main Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Timeline of Failure -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base">Хронология срыва (Сквозной таймлайн 1С:ERP + CRM)</h3>
+              <span class="text-xs px-2.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">TIMELINE AUDIT</span>
+            </div>
+            <div id="pm-timeline-container" class="space-y-4 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-gray-800">
+              <!-- Timeline items JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: 5 Whys & Action Items -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <!-- 5 Whys Card -->
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base">Анализ коренной причины: «5 Почему»</h3>
+              <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-xs font-mono">5 WHYS</span>
+            </div>
+            <div id="pm-whys-container" class="space-y-2.5 text-xs">
+              <!-- 5 Whys items JS -->
+            </div>
+          </div>
+
+          <!-- Executive Conclusion & Corrective Actions -->
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <h3 class="font-bold text-white text-base mb-3">Организационные решения Собственника</h3>
+            <div id="pm-actions-container" class="space-y-3">
+              <!-- Actions items JS -->
+            </div>
+            
+            <div class="mt-5 pt-4 border-t border-gray-800">
+              <button onclick="alert('Официальный отчет Постмортем сформирован в PDF и отправлен Собственнику и членам Совета Директоров в закрытый канал Telegram!')" class="w-full py-2.5 px-4 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-2">
+                <span>📑 Утвердить постмортем и направить Совету Директоров</span>
+              </button>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -832,7 +933,7 @@
     }
 
     function switchTab(tab) {
-      ['call', 'prompter', 'audit', 'twin', 'rop', 'tg'].forEach(t => {
+      ['call', 'prompter', 'audit', 'twin', 'postmortem', 'rop', 'tg'].forEach(t => {
         const v = document.getElementById(`view-${t}`);
         const b = document.getElementById(`tab-${t}`);
         if (v) v.classList.add('hidden');
@@ -843,6 +944,8 @@
       if (activeV) activeV.classList.remove('hidden');
       if (activeB) activeB.className = "px-4 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow";
       if (tab === 'twin') renderTwinEmployee();
+      renderPostmortemCase();
+      if (tab === 'postmortem') renderPostmortemCase();
       return;
     }
 
@@ -1101,6 +1204,257 @@
         ]
       }
     };
+
+    
+    // ==============================================
+    // POST-MORTEM AUDIT DATA & LOGIC
+    // ==============================================
+    const POSTMORTEM_DATA = {
+      case1: {
+        damageSum: "2 850 000 ₽",
+        marginLoss: "Упущенная маржа: 712 500 ₽ (25%)",
+        pointTime: "12.10 14:30",
+        pointDesc: "Молчание на запрос сметы",
+        rcaTitle: "Разрыв 1С ↔ CRM",
+        rcaSub: "Смета в 1С была готова, но не ушла",
+        actionShort: "Авто-триггер 1C ➔ CRM",
+        actionStatus: "Внедрено агентом Hermes",
+        timeline: [
+          {
+            time: "08.10 10:15",
+            source: "Битрикс24 (Входящий звонок)",
+            sourceBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            title: "Запрос на 45 тонн мостовых балок (АО «ТюменьНефтеГазСтрой»)",
+            desc: "Менеджер Иванов пообещал прислать расчет «как только технологи освободятся». Дедлайн не зафиксирован в CRM.",
+            icon: "📞"
+          },
+          {
+            time: "09.10 16:40",
+            source: "Битрикс24 (Задачи)",
+            sourceBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            title: "Задача технологу поставлена с опозданием на 30 часов",
+            desc: "Менеджер прикрепил чертеж КМ только в конце следующего дня. Потеряно полтора суток.",
+            icon: "⏱"
+          },
+          {
+            time: "11.10 11:20",
+            source: "1С:ERP (Калькуляция себестоимости)",
+            sourceBadge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+            title: "Технолог Петров рассчитал смету в 1С:ERP",
+            desc: "Документ «Плановая калькуляция №148» проведен в 1С. Но статус задачи в Битрикс24 не обновился.",
+            icon: "⚙️"
+          },
+          {
+            time: "12.10 14:30 (ТОЧКА НЕВОЗВРАТА)",
+            source: "WhatsApp / CRM",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Клиент запросил финализацию сметы: «У нас защита через 2 часа»",
+            desc: "Менеджер Иванов находился на обеде, сообщение не прочитано. Смета из 1С не отправлена.",
+            icon: "🚨"
+          },
+          {
+            time: "13.10 09:15",
+            source: "Битрикс24 (Сделка проиграна)",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Сделка закрыта: «Клиент выбрал конкурента»",
+            desc: "Клиент заключил договор с заводом «СтальМост», у которых расчет был готов еще 10 октября.",
+            icon: "❌"
+          }
+        ],
+        whys: [
+          { q: "1. Почему клиент ушел к конкуренту?", a: "Конкурент выдал КП на 3 дня раньше нашего." },
+          { q: "2. Почему мы задержали КП на 3 дня?", a: "Менеджер не передал чертежи сразу, а потом не увидел, что технолог уже всё посчитал в 1С." },
+          { q: "3. Почему менеджер не увидел готовность сметы?", a: "В 1С смета была проведена, но Битрикс24 никак не уведомил менеджера об этом событии." },
+          { q: "4. Почему смета лежала в 1С без движения?", a: "В регламенте не прописана авто-генерация коммерческого предложения при проведении калькуляции." },
+          { q: "5. КОРЕННАЯ ПРИЧИНА (Root Cause):", a: "Отсутствие сквозного вебхука между проведением документа в 1С:ERP и автоматической сборкой КП в Битрикс24." }
+        ],
+        actions: [
+          {
+            badge: "АВТОМАТИЗАЦИЯ HERMES",
+            title: "Сквозной Webhook: 1C:ERP ➔ Битрикс24",
+            desc: "При проведении Плановой калькуляции в 1С Hermes за 1 секунду переводит сделку в CRM на стадию «Смета готова» и формирует PDF-файл КП."
+          },
+          {
+            badge: "РЕГЛАМЕНТ ПРОДАЖ",
+            title: "Жесткий SLA: 2 часа на отправку готовой сметы",
+            desc: "Если менеджер не отправил сформированное КП клиенту в течение 2 часов, задача автоматически эскалируется РОПу в Telegram."
+          },
+          {
+            badge: "ПЕРСОНАЛ",
+            title: "Разбор на планерке с разбором потерь 712 тыс. ₽",
+            desc: "Демонстрация менеджерам сквозного таймлайна срыва сделки для исключения повторений."
+          }
+        ]
+      },
+      case2: {
+        damageSum: "320 000 ₽",
+        marginLoss: "Штрафные пени за срыв срока отгрузки (8 дней)",
+        pointTime: "04.10 08:30",
+        pointDesc: "Открытие смены без сырья",
+        rcaTitle: "Заказ без резерва металла",
+        rcaSub: "Снабжение не заказало лист 09Г2С",
+        actionShort: "ERP Auto-Reservation Check",
+        actionStatus: "Внедрено агентом Hermes",
+        timeline: [
+          {
+            time: "28.09 11:00",
+            source: "1С:ERP (Заказ клиента)",
+            sourceBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            title: "Проведен Заказ клиента на изготовление балок к 10 октября",
+            desc: "Менеджер указал срок отгрузки без проверки остатков сырья на складе.",
+            icon: "📝"
+          },
+          {
+            time: "02.10 09:00",
+            source: "1С:ERP (Заказ на производство)",
+            sourceBadge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+            title: "Заказ передан в цех резки",
+            desc: "Мастер смены принял заказ в работу, предположив, что лист металла уже на складе.",
+            icon: "⚙️"
+          },
+          {
+            time: "04.10 08:30 (ТОЧКА НЕВОЗВРАТА)",
+            source: "Цех №1 (Простой оборудования)",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Остановка линии резки: лист 09Г2С отсутствует",
+            desc: "Станок ЧПУ простоял 36 часов. Металл экстренно закупался с рынка по завышенной цене.",
+            icon: "🚨"
+          },
+          {
+            time: "18.10 17:00",
+            source: "Претензия заказчика",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Выставлены штрафные санкции: 320 000 ₽",
+            desc: "Заказчик удержал пени из оплаты по договору из-за задержки поставки на объект.",
+            icon: "💸"
+          }
+        ],
+        whys: [
+          { q: "1. Почему сорван срок?", a: "Линия лазерного раскроя простояла без сырья 36 часов." },
+          { q: "2. Почему не было сырья?", a: "Отдел снабжения узнал о потребности только в момент запуска смены." },
+          { q: "3. Почему снабжение не знало заранее?", a: "Заказ клиента в 1С был проведен в статусе «К обеспечению», но резерв не заблокировал дефицит." },
+          { q: "4. Почему менеджер согласовал нереальный срок?", a: "Менеджер не воспользовался штатным отчетом обеспечения заказов в ERP." },
+          { q: "5. КОРЕННАЯ ПРИЧИНА (Root Cause):", a: "Отсутствие контроля обеспечения материалами при согласовании даты отгрузки в CRM." }
+        ],
+        actions: [
+          {
+            badge: "АВТОМАТИЗАЦИЯ HERMES",
+            title: "Суфлер ERP: Проверка наличия сырья до обещания срока",
+            desc: "Hermes блокирует перевод сделки в статус «Согласовано», если в 1С:ERP нет 100% подтверждения обеспечения металлом."
+          },
+          {
+            badge: "ПРОИЗВОДСТВО",
+            title: "Алерты при простое смены >4 часов",
+            desc: "Если открытый Заказ на производство не начал движение за 4 часа, уведомление уходит Главному инженеру."
+          }
+        ]
+      },
+      case3: {
+        damageSum: "640 000 ₽",
+        marginLoss: "Брак партии 250 фланцев (затраты на переплавку и брак)",
+        pointTime: "06.10 15:00",
+        pointDesc: "Смена работала по ревизии чертежа v1",
+        rcaTitle: "Устаревшая спецификация",
+        rcaSub: "В цех ушла не та версия КМД",
+        actionShort: "ERP Version Lock",
+        actionStatus: "Внедрено агентом Hermes",
+        timeline: [
+          {
+            time: "02.10 14:00",
+            source: "Битрикс24 (Файлы)",
+            sourceBadge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+            title: "Клиент прислал корректировку чертежа ревизия v2 (изменена глубина фаски)",
+            desc: "Файл загружен в комментарий задачи, но в 1С:ERP ресурсная спецификация осталась старой.",
+            icon: "📎"
+          },
+          {
+            time: "06.10 15:00 (ТОЧКА НЕВОЗВРАТА)",
+            source: "1С:ERP (Выпуск продукции)",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Токарный участок выпустил партию по спецификации v1",
+            desc: "Партия 250 шт. изготовлена со старой фаской. На ОТК брак не распознали из-за отсутствия актуального чертежа.",
+            icon: "🚨"
+          },
+          {
+            time: "11.10 10:00",
+            source: "Рекламационный акт",
+            sourceBadge: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+            title: "Возврат партии заказчиком, переделка за счет завода",
+            desc: "Прямой убыток по металлу, электроэнергии и зарплате рабочих: 640 000 ₽.",
+            icon: "❌"
+          }
+        ],
+        whys: [
+          { q: "1. Почему партия ушла в брак?", a: "Фланцы выточены по устаревшему чертежу ревизии v1." },
+          { q: "2. Почему мастер взял чертеж v1?", a: "В маршрутной карте 1С была привязана спецификация №412 (v1)." },
+          { q: "3. Почему спецификацию не обновили?", a: "Технолог не получил уведомления о том, что клиент прислал ревизию v2 в CRM." },
+          { q: "4. Почему чертежи хранятся в разных местах?", a: "Часть правок клиенты шлют в CRM, а производство работает только по 1С." },
+          { q: "5. КОРЕННАЯ ПРИЧИНА (Root Cause):", a: "Отсутствие версионирования чертежей со сквозной валидацией между Битрикс24 Диск и 1С:ERP." }
+        ],
+        actions: [
+          {
+            badge: "АВТОМАТИЗАЦИЯ HERMES",
+            title: "Синхронизация версий КМД (Bitrix Drive ↔ 1C)",
+            desc: "Hermes хеширует файлы чертежей: при загрузке новой ревизии في CRM Заказ на производство в 1С автоматически приостанавливается до подтверждения технологом."
+          }
+        ]
+      }
+    };
+
+    function renderPostmortemCase() {
+      const select = document.getElementById('postmortem-case-select');
+      const caseKey = select ? select.value : 'case1';
+      const d = POSTMORTEM_DATA[caseKey];
+      if (!d) return;
+
+      document.getElementById('pm-damage-sum').innerText = d.damageSum;
+      document.getElementById('pm-margin-loss').innerText = d.marginLoss;
+      document.getElementById('pm-point-time').innerText = d.pointTime;
+      document.getElementById('pm-point-desc').innerText = d.pointDesc;
+      document.getElementById('pm-rca-title').innerText = d.rcaTitle;
+      document.getElementById('pm-rca-sub').innerText = d.rcaSub;
+      document.getElementById('pm-action-short').innerText = d.actionShort;
+      document.getElementById('pm-action-status').innerText = d.actionStatus;
+
+      // Render Timeline
+      const tlBox = document.getElementById('pm-timeline-container');
+      tlBox.innerHTML = d.timeline.map((item, idx) => `
+        <div class="relative pl-8">
+          <div class="absolute left-1.5 top-1.5 w-5 h-5 rounded-full bg-gray-900 border-2 border-indigo-500 flex items-center justify-center text-[10px] z-10">
+            ${item.icon}
+          </div>
+          <div class="p-3 bg-gray-950/70 rounded-xl border border-gray-900 space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs text-slate-400">${item.time}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${item.sourceBadge}">${item.source}</span>
+            </div>
+            <div class="font-bold text-xs text-white mt-1">${item.title}</div>
+            <div class="text-[11px] text-slate-300 leading-relaxed">${item.desc}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // Render 5 Whys
+      const whysBox = document.getElementById('pm-whys-container');
+      whysBox.innerHTML = d.whys.map((w, idx) => `
+        <div class="p-2.5 rounded-xl ${idx === 4 ? 'bg-rose-950/40 border border-rose-500/40' : 'bg-gray-950/60 border border-gray-900'}">
+          <div class="font-semibold ${idx === 4 ? 'text-rose-400 font-bold' : 'text-slate-300'}">${w.q}</div>
+          <div class="text-white mt-1 pl-2 border-l-2 ${idx === 4 ? 'border-rose-400 font-bold' : 'border-indigo-500/50'} text-[11px]">${w.a}</div>
+        </div>
+      `).join('');
+
+      // Render Actions
+      const actBox = document.getElementById('pm-actions-container');
+      actBox.innerHTML = d.actions.map(act => `
+        <div class="p-3 bg-indigo-950/30 rounded-xl border border-indigo-500/30 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-300 text-[10px] font-bold font-mono">${act.badge}</span>
+          </div>
+          <div class="font-bold text-xs text-white mt-1">${act.title}</div>
+          <div class="text-[11px] text-slate-300 leading-relaxed">${act.desc}</div>
+        </div>
+      `).join('');
+    }
 
     function renderTwinEmployee() {
       const select = document.getElementById('twin-employee-select');
