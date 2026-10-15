@@ -658,6 +658,20 @@
     
     // Voice Playback (SpeechSynthesis)
     let isPlayingVoice = false;
+    let cachedRussianVoices = [];
+
+    function loadSystemVoices() {
+      if ('speechSynthesis' in window) {
+        cachedRussianVoices = window.speechSynthesis.getVoices().filter(v => 
+          (v.lang && (v.lang.toLowerCase().includes('ru') || v.lang.toLowerCase().includes('rus')))
+        );
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      loadSystemVoices();
+      window.speechSynthesis.onvoiceschanged = loadSystemVoices;
+    }
     let voiceUtteranceIndex = 0;
     let voiceInterval = null;
     let playbackSeconds = 0;
@@ -754,8 +768,52 @@
 
         const utter = new SpeechSynthesisUtterance(cleanText);
         utter.lang = 'ru-RU';
-        utter.rate = isManager ? 1.05 : 1.0;
-        utter.pitch = isManager ? 1.0 : 1.15;
+
+        if (!cachedRussianVoices.length && 'speechSynthesis' in window) {
+          loadSystemVoices();
+        }
+
+        if (!isManager) {
+          // Клиент: Мужской деловой голос, скорость на 20% быстрее
+          utter.rate = 1.22; // +20-22% быстрее
+          utter.pitch = 0.82; // Глубокий деловой мужской тембр
+
+          // Подбор мужского голоса из доступных в системе
+          const maleVoice = cachedRussianVoices.find(v => {
+            const n = v.name.toLowerCase();
+            return n.includes('dmitry') || n.includes('pavel') || n.includes('david') || 
+                   n.includes('alex') || n.includes('male') || n.includes('boris') || n.includes('mikhail');
+          });
+          if (maleVoice) {
+            utter.voice = maleVoice;
+          }
+        } else {
+          // Менеджер продаж
+          if (activeCallType === 'excellent') {
+            // Ведущий специалист Анна Смирнова
+            utter.rate = 1.02;
+            utter.pitch = 1.15;
+            const femaleVoice = cachedRussianVoices.find(v => {
+              const n = v.name.toLowerCase();
+              return n.includes('svetlana') || n.includes('irina') || n.includes('female') || 
+                     n.includes('tatyana') || n.includes('elena') || n.includes('daria');
+            });
+            if (femaleVoice) {
+              utter.voice = femaleVoice;
+            }
+          } else {
+            // Менеджер Сергей Иванов (более медленный, неохотный)
+            utter.rate = 0.98;
+            utter.pitch = 0.92;
+            const maleVoice = cachedRussianVoices.find(v => {
+              const n = v.name.toLowerCase();
+              return n.includes('pavel') || n.includes('dmitry') || n.includes('male');
+            });
+            if (maleVoice) {
+              utter.voice = maleVoice;
+            }
+          }
+        }
 
         utter.onend = () => {
           voiceUtteranceIndex++;
