@@ -60,6 +60,9 @@
       <button onclick="switchTab('audit')" id="tab-audit" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
         🚨 1C:ERP Аудит
       </button>
+      <button onclick="switchTab('twin')" id="tab-twin" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
+        👤 Цифровой двойник 1С & Б24
+      </button>
       <button onclick="switchTab('rop')" id="tab-rop" class="px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">
         📊 Дашборд РОПа
       </button>
@@ -261,6 +264,138 @@
       <!-- Карточки расхождений -->
       <div class="space-y-4" id="audit-cards-container">
         <!-- Карточки JS -->
+      </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- TAB: ЦИФРОВОЙ ДВОЙНИК 1С:ERP & АНАЛИЗ ЗАДАЧ Б24 -->
+    <!-- ============================================== -->
+    <div id="view-twin" class="space-y-6 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-2xl font-bold text-white">Цифровой двойник сотрудника & Аудит регламентов</h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">1С ЖурналРегистрации + Б24 Tasks</span>
+          </div>
+          <p class="text-sm text-slate-400 mt-1">Реконструкция рабочего дня по транзакциям 1С:ERP, контроль задач в Битрикс24 и выявление отклонений от должностных инструкций</p>
+        </div>
+        
+        <!-- Employee Selector -->
+        <div class="flex items-center space-x-3 bg-gray-950 p-2 rounded-xl border border-gray-800">
+          <span class="text-xs text-slate-400 font-medium">Сотрудник:</span>
+          <select id="twin-employee-select" onchange="renderTwinEmployee()" class="bg-gray-900 border border-gray-700 text-white text-xs rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="ivanov">Иванов Сергей (Ведущий менеджер продаж)</option>
+            <option value="petrov">Петров Михаил (Ведущий инженер-технолог)</option>
+            <option value="vasilieva">Васильева Елена (Бухгалтер по расчетам)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">АКТИВНОСТЬ В 1С:ERP</div>
+          <div class="text-3xl font-bold text-white mt-2" id="twin-1c-hours">5 ч. 20 м.</div>
+          <div class="text-xs text-indigo-400 mt-1" id="twin-1c-events">248 транзакций в Журнале</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">ЗАДАЧИ В БИТРИКС24</div>
+          <div class="text-3xl font-bold text-indigo-400 mt-2" id="twin-b24-tasks">14 задач</div>
+          <div class="text-xs text-rose-400 mt-1" id="twin-b24-violations">4 срыва дедлайнов / SLA</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">СОБЛЮДЕНИЕ ИНСТРУКЦИИ</div>
+          <div class="text-3xl font-bold mt-2" id="twin-compliance-score">68%</div>
+          <div class="text-xs mt-1" id="twin-compliance-status">⚠️ Обнаружены аномалии</div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-gray-800">
+          <div class="text-xs text-slate-400 font-mono">РИСК БЕЗОПАСНОСТИ (SoD)</div>
+          <div class="text-3xl font-bold mt-2" id="twin-risk-score">СРЕДНИЙ</div>
+          <div class="text-xs mt-1 text-slate-400" id="twin-risk-sub">Попытки изменения цен</div>
+        </div>
+      </div>
+
+      <!-- Main Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Process Mining 1C Activity Heatmap & Events -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base flex items-center space-x-2">
+                <span>⏱ Хронометраж активности в 1С:ERP (Журнал Регистрации)</span>
+              </h3>
+              <span class="text-xs font-mono text-slate-400">Сегодня с 08:00 до 18:00</span>
+            </div>
+
+            <!-- Heatmap Bar -->
+            <div class="space-y-2">
+              <div class="text-xs text-slate-400 flex justify-between font-mono">
+                <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span>
+              </div>
+              <div id="twin-heatmap-bar" class="grid grid-cols-10 gap-1 h-8 bg-gray-950 p-1 rounded-xl border border-gray-900">
+                <!-- Heatmap segments JS -->
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span><span>Активная работа в 1С</span></span>
+                <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded bg-indigo-500 inline-block"></span><span>Чтение / отчеты</span></span>
+                <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500 inline-block"></span><span>Простой / звонки Б24</span></span>
+                <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded bg-rose-500 inline-block"></span><span>Ошибки / Аномалии</span></span>
+              </div>
+            </div>
+
+            <!-- Structured breakdown of 1C operations -->
+            <div class="mt-6">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Структура транзакций сотрудника в 1С:</h4>
+              <div id="twin-1c-breakdown" class="space-y-2 text-xs">
+                <!-- Breakdown items JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- B24 Tasks Intelligence -->
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base">Исполнение задач в Битрикс24 (SLA & Дисциплина)</h3>
+              <span class="text-xs px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono" id="twin-b24-badge">tasks.task.list</span>
+            </div>
+            <div id="twin-b24-task-list" class="space-y-3">
+              <!-- Task items JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Job Description Compliance & Deviations -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="glass-card rounded-2xl p-5 border border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-white text-base">Аудит должностной инструкции</h3>
+              <span id="twin-profile-badge" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">ОТКЛОНЕНИЯ</span>
+            </div>
+
+            <div class="p-3 bg-gray-950/60 rounded-xl border border-gray-900 mb-4">
+              <div class="text-xs text-slate-400">Профиль должности в штатном расписании:</div>
+              <div class="text-sm font-semibold text-white mt-0.5" id="twin-job-title">Ведущий менеджер отдела позаказных продаж</div>
+              <div class="text-xs text-slate-400 mt-2">Ключевые регламентные обязанности:</div>
+              <div class="text-xs text-slate-300 mt-1" id="twin-job-duties">Квалификация входящих лидов, выставление КП, заведение Заказов клиентов в 1С, соблюдение лимитов ДЗ.</div>
+            </div>
+
+            <!-- Identified Anomalies / Deviations -->
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Зафиксированные аномалии и риски (Hermes AI):</h4>
+            <div id="twin-deviations-list" class="space-y-3">
+              <!-- Deviations items JS -->
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-6 pt-4 border-t border-gray-800">
+              <button onclick="alert('Уведомление и аналитическая записка сформированы и направлены Руководителю подразделения в Telegram!')" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-2">
+                <span>📑 Сформировать отчет директору по отклонениям</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -639,12 +774,18 @@
     }
 
     function switchTab(tab) {
-      ['call', 'prompter', 'audit', 'rop', 'tg'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).className = "px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+      ['call', 'prompter', 'audit', 'twin', 'rop', 'tg'].forEach(t => {
+        const v = document.getElementById(`view-${t}`);
+        const b = document.getElementById(`tab-${t}`);
+        if (v) v.classList.add('hidden');
+        if (b) b.className = "px-4 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
       });
-      document.getElementById(`view-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}`).className = "px-4 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow";
+      const activeV = document.getElementById(`view-${tab}`);
+      const activeB = document.getElementById(`tab-${tab}`);
+      if (activeV) activeV.classList.remove('hidden');
+      if (activeB) activeB.className = "px-4 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow";
+      if (tab === 'twin') renderTwinEmployee();
+      return;
     }
 
     function loadCall(type) {
@@ -700,6 +841,279 @@
           </div>
         `;
       }
+    }
+
+    
+    // ==============================================
+    // TWIN & B24 TASKS DATA & LOGIC
+    // ==============================================
+    const TWIN_DATA = {
+      ivanov: {
+        jobTitle: "Ведущий менеджер отдела позаказных продаж",
+        jobDuties: "Квалификация лидов, выставление КП, оформление Заказов клиентов в 1С, согласование скидок с РОП, контроль дебиторской задолженности.",
+        hours1C: "5 ч. 20 м.",
+        events1C: "248 транзакций в Журнале",
+        tasksB24: "14 задач",
+        violationsB24: "4 срыва дедлайнов / SLA",
+        complianceScore: "68%",
+        complianceColor: "text-amber-400",
+        complianceStatus: "⚠️ Выявлены расхождения с ДРИ",
+        riskScore: "ВЫСОКИЙ",
+        riskColor: "text-rose-400",
+        riskSub: "Попытки обхода цен и скидок",
+        heatmap: [
+          { label: "08-09", color: "bg-indigo-500", title: "Вход в 1С, открытие отчетов по остаткам" },
+          { label: "09-10", color: "bg-emerald-500", title: "Активный ввод 3 Заказов клиентов" },
+          { label: "10-11", color: "bg-amber-500", title: "Звонки в Битрикс24 (мало действий в 1С)" },
+          { label: "11-12", color: "bg-rose-500", title: "⚠️ Ошибка прав: попытка изменения цен без согласования" },
+          { label: "12-13", color: "bg-gray-800", title: "Обеденный перерыв (нет активности)" },
+          { label: "13-14", color: "bg-emerald-500", title: "Проведение документов реализации" },
+          { label: "14-15", color: "bg-amber-500", title: "Зависшие задачи в Б24 без закрытия" },
+          { label: "15-16", color: "bg-emerald-500", title: "Оформление спецификаций" },
+          { label: "16-17", color: "bg-indigo-500", title: "Печать закрывающих документов" },
+          { label: "17-18", color: "bg-rose-500", title: "⚠️ Перенос дедлайнов по 3 задачам на завтра" }
+        ],
+        breakdown1C: [
+          { name: "Проведение документов (Заказ клиента, Реализация)", count: "18 операций", pct: "42%", color: "bg-emerald-500" },
+          { name: "Справочники (Контрагенты, Контактные лица)", count: "34 операции", pct: "22%", color: "bg-indigo-500" },
+          { name: "Формирование тяжелых отчетов (Ведомость расчетов)", count: "28 вызовов", pct: "18%", color: "bg-indigo-400" },
+          { name: "Ручные правки номенклатуры (в обход типового подбора)", count: "45 минут", pct: "12%", color: "bg-amber-500" },
+          { name: "Отказы в доступе (Журнал: AccessDenied - цены)", count: "4 попытки", pct: "6%", color: "bg-rose-500" }
+        ],
+        tasksB24List: [
+          {
+            title: "Подготовить КП для АО «МостоТрест» (35 т балок)",
+            deadline: "Сегодня 15:00",
+            status: "ВЫПОЛНЕНО В СРОК",
+            badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+            comment: "КП сформировано и отправлено клиенту. Контрольный звонок назначен."
+          },
+          {
+            title: "Срочный перезвон: ООО «СеверСпецСтрой» (нет Next Step)",
+            deadline: "Сегодня 18:00",
+            status: "ПРОСРОЧЕНО (ПЕРЕНОС)",
+            badge: "bg-rose-500/20 text-rose-400 border-rose-500/40",
+            comment: "Дедлайн перенесен менеджером на завтра 10:00 без объяснения причины."
+          },
+          {
+            title: "Запросить акты сверки у ООО «СибПромМеталл»",
+            deadline: "Вчера 17:00",
+            status: "ЗАВИСШАЯ (3 дня)",
+            badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+            comment: "Нет активности в задаче более 72 часов. Менеджер не напоминал клиенту."
+          }
+        ],
+        deviations: [
+          {
+            type: "CRITICAL (SoD Нарушение)",
+            badge: "bg-rose-500/20 text-rose-400 border-rose-500/40",
+            title: "Попытка ручной корректировки цены в проведенном заказе",
+            desc: "В 11:42 зафиксирована попытка изменить типовую цену прайса в «Заказе клиента №1042» в обход визирования РОПа. Сработала блокировка 1С."
+          },
+          {
+            type: "РЕГЛАМЕНТ 1C:ERP",
+            badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+            title: "Ручной ввод аналогов металла вместо штатного помощника",
+            desc: "Сотрудник потратил 45 минут на ручной поиск типоразмеров в номенклатуре. Нарушение регламента быстрого подбора 1C:ERP."
+          },
+          {
+            type: "БИТРИКС24 ДИСЦИПЛИНА",
+            badge: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+            title: "Систематический перенос дедлайнов (4 задачи за неделю)",
+            desc: "Средний перенос срока составляет +28 часов. Риск потери «горячих» лидов на этапе согласования сметы."
+          }
+        ]
+      },
+      petrov: {
+        jobTitle: "Ведущий инженер-технолог производственного отдела",
+        jobDuties: "Расчет спецификаций на изделия, нормирование трудоемкости, создание маршрутных карт и ресурсных спецификаций в 1С:ERP.",
+        hours1C: "7 ч. 10 м.",
+        events1C: "412 транзакций в Журнале",
+        tasksB24: "8 задач",
+        violationsB24: "0 срывов (100% SLA)",
+        complianceScore: "96%",
+        complianceColor: "text-emerald-400",
+        complianceStatus: "✓ Полное соответствие регламенту",
+        riskScore: "НИЗКИЙ",
+        riskColor: "text-emerald-400",
+        riskSub: "Штатные операции технолога",
+        heatmap: [
+          { label: "08-09", color: "bg-emerald-500", title: "Создание ресурсных спецификаций" },
+          { label: "09-10", color: "bg-emerald-500", title: "Расчет расхода листового проката" },
+          { label: "10-11", color: "bg-emerald-500", title: "Ввод маршрутных карт цеха №2" },
+          { label: "11-12", color: "bg-indigo-500", title: "Проверка чертежей КМД" },
+          { label: "12-13", color: "bg-gray-800", title: "Обеденный перерыв" },
+          { label: "13-14", color: "bg-emerald-500", title: "Нормирование лазерной резки" },
+          { label: "14-15", color: "bg-emerald-500", title: "Утверждение технологических карт" },
+          { label: "15-16", color: "bg-indigo-500", title: "Согласование задач в Битрикс24" },
+          { label: "16-17", color: "bg-emerald-500", title: "Запуск плановых калькуляций" },
+          { label: "17-18", color: "bg-indigo-500", title: "Закрытие смены и отчетов" }
+        ],
+        breakdown1C: [
+          { name: "Ресурсные спецификации и Маршрутные карты", count: "14 объектов", pct: "55%", color: "bg-emerald-500" },
+          { name: "Плановые калькуляции себестоимости", count: "8 документов", pct: "25%", color: "bg-indigo-500" },
+          { name: "Справочник «Номенклатура» (создание полуфабрикатов)", count: "19 записей", pct: "15%", color: "bg-indigo-400" },
+          { name: "Чтение нормативов и чертежей", count: "32 обращения", pct: "5%", color: "bg-indigo-300" }
+        ],
+        tasksB24List: [
+          {
+            title: "Расчет сметы на 400 шт. закладных деталей МН-1",
+            deadline: "Сегодня 14:00",
+            status: "ВЫПОЛНЕНО (за 1.5 ч)",
+            badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+            comment: "Спецификация создана в 1С, плановая себестоимость рассчитана."
+          },
+          {
+            title: "Экспертиза КМД: Мостовые балки 140Б",
+            deadline: "Завтра 12:00",
+            status: "В РАБОТЕ (80%)",
+            badge: "bg-indigo-500/20 text-indigo-400 border-indigo-500/40",
+            comment: "Чертежи согласованы, выполняется раскрой металла."
+          }
+        ],
+        deviations: [
+          {
+            type: "ПОЛОЖИТЕЛЬНАЯ ПРАКТИКА",
+            badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+            title: "Высокая скорость нормирования заказов",
+            desc: "Среднее время выпуска ресурсной спецификации в 1С:ERP составило 38 минут (норматив завода: до 2 часов). Замечаний нет."
+          }
+        ]
+      },
+      vasilieva: {
+        jobTitle: "Бухгалтер по расчетам с поставщиками и подрядчиками",
+        jobDuties: "Учет поступления сырья и материалов, проверка первичных документов (УПД), разноска банковских выписок, сверка с поставщиками металла.",
+        hours1C: "6 ч. 45 м.",
+        events1C: "318 транзакций в Журнале",
+        tasksB24: "11 задач",
+        violationsB24: "1 просрочка (сверка)",
+        complianceScore: "82%",
+        complianceColor: "text-indigo-400",
+        complianceStatus: "✓ В пределах нормы",
+        riskScore: "НИЗКИЙ",
+        riskColor: "text-emerald-400",
+        riskSub: "Ошибки в аналитике ДДС",
+        heatmap: [
+          { label: "08-09", color: "bg-emerald-500", title: "Загрузка банковской выписки Клиент-Банк" },
+          { label: "09-10", color: "bg-rose-500", title: "⚠️ Проведение ПП №892 без статьи ДДС" },
+          { label: "10-11", color: "bg-emerald-500", title: "Оприходование металлопроката от Северсталь" },
+          { label: "11-12", color: "bg-emerald-500", title: "Ввод входящих счетов-фактур" },
+          { label: "12-13", color: "bg-gray-800", title: "Обеденный перерыв" },
+          { label: "13-14", color: "bg-indigo-500", title: "Формирование ОСВ по 60 счету" },
+          { label: "14-15", color: "bg-emerald-500", title: "Проведение накладных на сырье" },
+          { label: "15-16", color: "bg-amber-500", title: "Ручной ввод реквизитов УПД (рутина)" },
+          { label: "16-17", color: "bg-emerald-500", title: "Акты сверки с транспортными компаниями" },
+          { label: "17-18", color: "bg-indigo-500", title: "Подготовка платежного календаря на завтра" }
+        ],
+        breakdown1C: [
+          { name: "Приобретение товаров и услуг (Поступление ТМЦ)", count: "24 документа", pct: "45%", color: "bg-emerald-500" },
+          { name: "Списание с безналичного счета (Банк)", count: "16 документов", pct: "25%", color: "bg-indigo-500" },
+          { name: "Оборотно-сальдовая ведомость и анализ счета 60", count: "31 отчет", pct: "20%", color: "bg-indigo-400" },
+          { name: "Документы без аналитики движения (ДДС)", count: "1 документ", pct: "10%", color: "bg-amber-500" }
+        ],
+        tasksB24List: [
+          {
+            title: "Провести УПД №482 от ООО «ТК МеталлТранс»",
+            deadline: "Сегодня 16:00",
+            status: "ВЫПОЛНЕНО В СРОК",
+            badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+            comment: "Документ проведен в 1С, скан прикреплен к задаче в Б24."
+          },
+          {
+            title: "Сверка взаимных расчетов с ПАО «НЛМК» за 3 квартал",
+            deadline: "Вчера 18:00",
+            status: "В РАБОТЕ (ПРОСРОЧЕНО 4 ч)",
+            badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+            comment: "Ожидается подписанный скан от бухгалтерии поставщика."
+          }
+        ],
+        deviations: [
+          {
+            type: "АНАЛИТИКА УПРАВЛЕНЧЕСКОГО УЧЕТА",
+            badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+            title: "Пропуск статьи движения денежных средств (ДДС)",
+            desc: "Платежное поручение №892 проведено без заполнения статьи ДДС. Заблокировало корректный расчет Cash Flow для финдиректора."
+          },
+          {
+            type: "ПОТЕНЦИАЛ АВТОМАТИЗАЦИИ (AI OCR)",
+            badge: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+            title: "2.5 часа ручного набора накладных УПД в день",
+            desc: "Бухгалтер вручную перепечатывает сканы накладных. Рекомендуется подключение авто-распознавания первичных документов через Hermes AI Vision."
+          }
+        ]
+      }
+    };
+
+    function renderTwinEmployee() {
+      const select = document.getElementById('twin-employee-select');
+      const empKey = select ? select.value : 'ivanov';
+      const d = TWIN_DATA[empKey];
+      if (!d) return;
+
+      document.getElementById('twin-job-title').innerText = d.jobTitle;
+      document.getElementById('twin-job-duties').innerText = d.jobDuties;
+      document.getElementById('twin-1c-hours').innerText = d.hours1C;
+      document.getElementById('twin-1c-events').innerText = d.events1C;
+      document.getElementById('twin-b24-tasks').innerText = d.tasksB24;
+      document.getElementById('twin-b24-violations').innerText = d.violationsB24;
+      
+      const compScoreEl = document.getElementById('twin-compliance-score');
+      compScoreEl.innerText = d.complianceScore;
+      compScoreEl.className = `text-3xl font-bold mt-2 ${d.complianceColor}`;
+      document.getElementById('twin-compliance-status').innerText = d.complianceStatus;
+
+      const riskScoreEl = document.getElementById('twin-risk-score');
+      riskScoreEl.innerText = d.riskScore;
+      riskScoreEl.className = `text-3xl font-bold mt-2 ${d.riskColor}`;
+      document.getElementById('twin-risk-sub').innerText = d.riskSub;
+
+      // Render Heatmap
+      const heatBox = document.getElementById('twin-heatmap-bar');
+      heatBox.innerHTML = d.heatmap.map(h => `
+        <div title="${h.label}:00 - ${h.title}" class="${h.color} rounded-lg h-full transition hover:opacity-80 cursor-pointer flex items-center justify-center text-[10px] font-mono text-white/80">
+          ${h.label}
+        </div>
+      `).join('');
+
+      // Render 1C Breakdown
+      const bdBox = document.getElementById('twin-1c-breakdown');
+      bdBox.innerHTML = d.breakdown1C.map(b => `
+        <div class="p-2.5 bg-gray-950/60 rounded-xl border border-gray-900 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded ${b.color}"></span>
+            <span class="text-white font-medium">${b.name}</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-slate-400 font-mono">${b.count}</span>
+            <span class="px-2 py-0.5 rounded bg-gray-800 text-slate-300 font-bold font-mono text-[11px]">${b.pct}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Render B24 Tasks
+      const tasksBox = document.getElementById('twin-b24-task-list');
+      tasksBox.innerHTML = d.tasksB24List.map(t => `
+        <div class="p-3 bg-gray-950/60 rounded-xl border border-gray-900 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <div class="font-semibold text-white text-xs">${t.title}</div>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${t.badge}">${t.status}</span>
+          </div>
+          <div class="text-[11px] text-slate-400">Дедлайн: <b class="text-slate-300">${t.deadline}</b></div>
+          <div class="text-[11px] text-slate-300 italic">💬 ${t.comment}</div>
+        </div>
+      `).join('');
+
+      // Render Deviations
+      const devBox = document.getElementById('twin-deviations-list');
+      devBox.innerHTML = d.deviations.map(dev => `
+        <div class="p-3 bg-gray-950/80 rounded-xl border border-gray-900 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${dev.badge}">${dev.type}</span>
+          </div>
+          <div class="font-bold text-xs text-white mt-1">${dev.title}</div>
+          <div class="text-[11px] text-slate-300 leading-relaxed">${dev.desc}</div>
+        </div>
+      `).join('');
     }
 
     function renderPrompter() {
@@ -833,6 +1247,7 @@
       loadCall('poor');
       renderPrompter();
       renderAuditCards();
+      renderTwinEmployee();
     };
   </script>
 </body>
